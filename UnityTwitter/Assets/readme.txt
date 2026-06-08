@@ -3,12 +3,12 @@
 * This script package is developped in C#.
 
 1. OAuth support with PIN. 
- The most difficult part of accessing Twitter API is dealing with OAuth (http://dev.twitter.com/pages/auth). 
+ The most difficult part of accessing Twitter API is dealing with OAuth (https://dev.twitter.com/pages/auth).
  With this code package, you can easily get and save "access token & secret" of player's Twitter account.
  It allows you to access all Twitter functionalities requring authentication with OAuth.
   
 2. POST statuses/update API support. 
- With OAuth support, I have implemented "POST statuses/update" API (http://dev.twitter.com/doc/post/statuses/update).
+ With OAuth support, I have implemented "POST statuses/update" API (https://dev.twitter.com/doc/post/statuses/update).
  It will let you tweet in your game like "I've just reached 10,000 points in UnityGame!".
  I think this API function is the reason why most games want to access Twitter.
 
@@ -19,13 +19,13 @@
 4. Extensibility.
  Code is well structured for you to easily add more Twitter API functions just like "POST statuses/update" API support I have made.
  Just use GetHeaderWithAccessToken() function to fill HTTP request header and run Twitter API url.
- 
+
 5. Free. :D
 
 
  [How to run Demo]
  1. You need to register your app in Twitter to get cosumer key and secret.
-    Go to this page for registration: http://dev.twitter.com/apps/new
+    Go to this page for registration: https://dev.twitter.com/apps/new
     
  2. After registration, you should be able to see your app's "Consumer key" and "Consumer secret"
  
@@ -44,8 +44,6 @@
     Go to your Twitter webpage and the tweet should be there.
 
 *** All the key images are created by my dear friend, Ivan Ortega( robotivan@gmail.com ).
-    
+
 Thank you.
 Young ( youngwook.yang@gmail.com )
-  
- 

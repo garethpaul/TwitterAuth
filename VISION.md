@@ -18,6 +18,7 @@ Priority:
 - Keep consumer keys and secrets configured by the developer, not committed
 - Avoid logging access tokens and token secrets
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context
+- Keep runtime network endpoints on HTTPS
 
 Next priorities:
 

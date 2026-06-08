@@ -1,12 +1,14 @@
 # [P2] Move runtime network endpoint off plain HTTP
 
+Status: Fixed
+
 ## Severity
 
 P2 - security/reliability
 
 ## Evidence
 
-- `UnityTwitter/Assets/Demo.cs:69`: `Application.OpenURL("http://dev.twitter.com/apps/new");`
+- `UnityTwitter/Assets/Demo.cs`: runtime registration now opens `https://dev.twitter.com/apps/new`.
 
 ## Problem
 
@@ -15,6 +17,8 @@ The application sends a runtime request to a plain-HTTP endpoint. That can expos
 ## Suggested fix
 
 Use HTTPS for the endpoint, move the URL into environment or build configuration, and surface request failures to the user or caller.
+
+The runtime endpoint now uses HTTPS. Future work can still move the URL into build configuration if the sample is revived.
 
 ## Review metadata
 
