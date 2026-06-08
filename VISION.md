@@ -45,3 +45,6 @@ make revocation and storage behavior clear.
 - Token logging
 - Silent posting
 - Token storage changes without security notes
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
