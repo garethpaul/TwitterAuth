@@ -39,7 +39,7 @@ OAuth samples can expose long-lived tokens and post on behalf of users. The
 demo should avoid printing secrets, should keep posting explicit, and should
 make revocation and storage behavior clear.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Checked-in API credentials
 - Token logging
