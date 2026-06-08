@@ -35,6 +35,11 @@ Contribution rules:
 
 ## Security And Responsible Use
 
+Canonical security policy and reporting:
+
+- [`SECURITY.md`](SECURITY.md)
+
+
 OAuth samples can expose long-lived tokens and post on behalf of users. The
 demo should avoid printing secrets, should keep posting explicit, and should
 make revocation and storage behavior clear.
