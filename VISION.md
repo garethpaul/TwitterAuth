@@ -19,11 +19,11 @@ Priority:
 - Avoid logging access tokens and token secrets
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context
 - Keep runtime network endpoints on HTTPS
+- Keep demo logs redacted when OAuth succeeds
 
 Next priorities:
 
 - Add README setup notes for Unity and API credential configuration
-- Remove or redact token logs in the demo
 - Document secure token storage alternatives to plain PlayerPrefs
 - Add a no-post demo path for authentication-only testing
 

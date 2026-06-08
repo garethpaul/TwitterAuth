@@ -147,8 +147,8 @@ public class Demo : MonoBehaviour
             string log = "LoadTwitterUserInfo - succeeded";
             log += "\n    UserId : " + m_AccessTokenResponse.UserId;
             log += "\n    ScreenName : " + m_AccessTokenResponse.ScreenName;
-            log += "\n    Token : " + m_AccessTokenResponse.Token;
-            log += "\n    TokenSecret : " + m_AccessTokenResponse.TokenSecret;
+            log += "\n    Token : <redacted>";
+            log += "\n    TokenSecret : <redacted>";
             Debug.Log(log);
         }
     }
@@ -158,8 +158,8 @@ public class Demo : MonoBehaviour
         if (success)
         {
             string log = "OnRequestTokenCallback - succeeded";
-            log += "\n    Token : " + response.Token;
-            log += "\n    TokenSecret : " + response.TokenSecret;
+            log += "\n    Token : <redacted>";
+            log += "\n    TokenSecret : <redacted>";
             print(log);
 
             m_RequestTokenResponse = response;
@@ -179,8 +179,8 @@ public class Demo : MonoBehaviour
             string log = "OnAccessTokenCallback - succeeded";
             log += "\n    UserId : " + response.UserId;
             log += "\n    ScreenName : " + response.ScreenName;
-            log += "\n    Token : " + response.Token;
-            log += "\n    TokenSecret : " + response.TokenSecret;
+            log += "\n    Token : <redacted>";
+            log += "\n    TokenSecret : <redacted>";
             print(log);
 
             m_AccessTokenResponse = response;

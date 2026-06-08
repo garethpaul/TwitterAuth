@@ -60,11 +60,20 @@ def check_bug_note_status():
     require("https://dev.twitter.com/apps/new" in bug, "bug note must point to the HTTPS endpoint")
 
 
+def check_demo_token_logging():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    require('"\\n    Token : " +' not in demo, "demo must not log access or request tokens")
+    require('"\\n    TokenSecret : " +' not in demo, "demo must not log token secrets")
+    require("Token : <redacted>" in demo, "demo logs must redact token values")
+    require("TokenSecret : <redacted>" in demo, "demo logs must redact token secret values")
+
+
 def main():
     checks = [
         check_required_project_files,
         check_runtime_urls_are_https,
         check_bug_note_status,
+        check_demo_token_logging,
     ]
     try:
         for check in checks:

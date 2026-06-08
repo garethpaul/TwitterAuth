@@ -42,11 +42,12 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Running or Using the Project
 
 - Open `UnityTwitter` with a compatible legacy Unity editor and inspect the demo scene.
-- Run `make verify` for static checks. The build step runs Unity only on hosts where `unity` is installed.
+- Run `make check` for static checks. The build step runs Unity only on hosts
+  where `unity` is installed.
 
 ## Testing and Verification
 
-- `make verify`
+- `make check`
 - Legacy Unity editor validation for scene/runtime behavior
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
