@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 DOCS_PLANS = ROOT / "docs/plans"
 CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-twitterauth-baseline.md"
+CONSUMER_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-consumer-credential-guards.md"
 
 
 def fail(message):
@@ -196,11 +197,84 @@ def check_access_token_exchange_guards():
     )
 
 
+def check_api_consumer_credential_guards():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+
+    require(
+        "private static bool ConsumerCredentialsAreMissing" in api,
+        "API helpers must centralize missing consumer credential checks",
+    )
+
+    request_token_match = re.search(
+        r"public static IEnumerator GetRequestToken\([^)]*\)\s*\{"
+        r"(?P<preamble>.*?)WWW web = WWWRequestToken",
+        api,
+        re.DOTALL,
+    )
+    require(request_token_match, "GetRequestToken must guard before building a signed request")
+    request_token_preamble = request_token_match.group("preamble")
+    require(
+        "ConsumerCredentialsAreMissing(consumerKey, consumerSecret)" in request_token_preamble,
+        "GetRequestToken must guard missing consumer credentials before signing",
+    )
+    require(
+        "GetRequestToken - consumer credentials are missing." in request_token_preamble,
+        "GetRequestToken guard must use a redacted credential-missing message",
+    )
+    require(
+        "callback(false, null);" in request_token_preamble and "yield break;" in request_token_preamble,
+        "GetRequestToken guard must fail the callback and stop before signing",
+    )
+
+    access_token_match = re.search(
+        r"public static IEnumerator GetAccessToken\([^)]*\)\s*\{"
+        r"(?P<preamble>.*?)if \(string\.IsNullOrEmpty\(requestToken\)",
+        api,
+        re.DOTALL,
+    )
+    require(access_token_match, "GetAccessToken must guard credentials before request-token checks")
+    access_token_preamble = access_token_match.group("preamble")
+    require(
+        "ConsumerCredentialsAreMissing(consumerKey, consumerSecret)" in access_token_preamble,
+        "GetAccessToken must guard missing consumer credentials before signing",
+    )
+    require(
+        "GetAccessToken - consumer credentials are missing." in access_token_preamble,
+        "GetAccessToken guard must use a redacted credential-missing message",
+    )
+    require(
+        "callback(false, null);" in access_token_preamble and "yield break;" in access_token_preamble,
+        "GetAccessToken credential guard must fail the callback and stop before signing",
+    )
+
+    post_tweet_match = re.search(
+        r"public static IEnumerator PostTweet\([^)]*\)\s*\{"
+        r"(?P<preamble>.*?)if \(response == null",
+        api,
+        re.DOTALL,
+    )
+    require(post_tweet_match, "PostTweet must guard credentials before access-token checks")
+    post_tweet_preamble = post_tweet_match.group("preamble")
+    require(
+        "ConsumerCredentialsAreMissing(consumerKey, consumerSecret)" in post_tweet_preamble,
+        "PostTweet must guard missing consumer credentials before signing",
+    )
+    require(
+        "PostTweet - consumer credentials are missing." in post_tweet_preamble,
+        "PostTweet guard must use a redacted credential-missing message",
+    )
+    require(
+        "callback(false);" in post_tweet_preamble and "yield break;" in post_tweet_preamble,
+        "PostTweet credential guard must fail the callback and stop before signing",
+    )
+
+
 def check_docs_plans():
     require(DOCS_PLANS.is_dir(), "docs/plans must exist")
     plans = sorted(DOCS_PLANS.glob("*.md"))
     require(plans, "docs/plans must contain completed maintenance plans")
     require(CANONICAL_PLAN in plans, f"{CANONICAL_PLAN.relative_to(ROOT)} must be present")
+    require(CONSUMER_CREDENTIAL_PLAN in plans, f"{CONSUMER_CREDENTIAL_PLAN.relative_to(ROOT)} must be present")
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -219,6 +293,7 @@ def main():
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
         check_access_token_exchange_guards,
+        check_api_consumer_credential_guards,
         check_docs_plans,
     ]
     try:

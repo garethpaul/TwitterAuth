@@ -49,6 +49,13 @@ namespace Twitter
 
         public static IEnumerator GetRequestToken(string consumerKey, string consumerSecret, RequestTokenCallback callback)
         {
+            if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
+            {
+                Debug.Log("GetRequestToken - consumer credentials are missing.");
+                callback(false, null);
+                yield break;
+            }
+
             WWW web = WWWRequestToken(consumerKey, consumerSecret);
 
             yield return web;
@@ -93,6 +100,13 @@ namespace Twitter
 
         public static IEnumerator GetAccessToken(string consumerKey, string consumerSecret, string requestToken, string pin, AccessTokenCallback callback)
         {
+            if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
+            {
+                Debug.Log("GetAccessToken - consumer credentials are missing.");
+                callback(false, null);
+                yield break;
+            }
+
             if (string.IsNullOrEmpty(requestToken) || string.IsNullOrEmpty(pin))
             {
                 Debug.Log("GetAccessToken - request token or PIN is missing.");
@@ -188,6 +202,13 @@ namespace Twitter
 
         public static IEnumerator PostTweet(string text, string consumerKey, string consumerSecret, AccessTokenResponse response, PostTweetCallback callback)
         {
+            if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
+            {
+                Debug.Log("PostTweet - consumer credentials are missing.");
+                callback(false);
+                yield break;
+            }
+
             if (response == null ||
                 string.IsNullOrEmpty(response.Token) ||
                 string.IsNullOrEmpty(response.TokenSecret))
@@ -309,6 +330,11 @@ namespace Twitter
             parameters.Add("oauth_signature_method", "HMAC-SHA1");
             parameters.Add("oauth_consumer_key", consumerKey);
             parameters.Add("oauth_consumer_secret", consumerSecret);
+        }
+
+        private static bool ConsumerCredentialsAreMissing(string consumerKey, string consumerSecret)
+        {
+            return string.IsNullOrEmpty(consumerKey) || string.IsNullOrEmpty(consumerSecret);
         }
 
         private static string GetFinalOAuthHeader(string HTTPRequestType, string URL, Dictionary<string, string> parameters)

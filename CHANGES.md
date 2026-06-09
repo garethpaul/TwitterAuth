@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Guarded request-token, access-token, and tweet-post API helpers when consumer
+  credentials are missing before signed requests are built.
+- Added static checker coverage for API-level consumer credential guards.
 - Guarded authorization-page launches when the request token is missing.
 - URL-encoded request tokens before interpolating them into authorization URLs.
 - Guarded access-token exchanges when the request token or PIN is missing.

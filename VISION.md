@@ -16,6 +16,8 @@ Priority:
 
 - Preserve the OAuth token exchange and Unity demo scene
 - Keep consumer keys and secrets configured by the developer, not committed
+- Guard API-level OAuth helpers before signing requests with missing consumer
+  credentials
 - Avoid logging access tokens and token secrets
 - Avoid logging raw OAuth response bodies
 - Generate OAuth nonces with cryptographic random bytes
