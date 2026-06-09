@@ -2,6 +2,7 @@
 
 ## 2026-06-08
 
+- Added canonical `docs/plans` coverage to the Unity static contract checker.
 - Redacted request/access token and token-secret values from Unity demo logs.
 - Added a static contract for token-log redaction and `make check` as the
   shared verification alias.

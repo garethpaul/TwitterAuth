@@ -48,6 +48,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Testing and Verification
 
 - `make check`
+- Completed maintenance plans live under `docs/plans` and are checked by
+  `make check`.
 - Legacy Unity editor validation for scene/runtime behavior
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -67,6 +69,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
+- See `docs/plans/2026-06-08-twitterauth-baseline.md` for the current static
+  verification baseline.
 
 ## Contributing
 

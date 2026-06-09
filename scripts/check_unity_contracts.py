@@ -8,6 +8,8 @@ import xml.etree.ElementTree as ET
 
 
 ROOT = Path(__file__).resolve().parents[1]
+DOCS_PLANS = ROOT / "docs/plans"
+CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-twitterauth-baseline.md"
 
 
 def fail(message):
@@ -68,12 +70,25 @@ def check_demo_token_logging():
     require("TokenSecret : <redacted>" in demo, "demo logs must redact token secret values")
 
 
+def check_docs_plans():
+    require(DOCS_PLANS.is_dir(), "docs/plans must exist")
+    plans = sorted(DOCS_PLANS.glob("*.md"))
+    require(plans, "docs/plans must contain completed maintenance plans")
+    require(CANONICAL_PLAN in plans, f"{CANONICAL_PLAN.relative_to(ROOT)} must be present")
+
+    for plan in plans:
+        text = plan.read_text(encoding="utf-8")
+        require("Status: Completed" in text, f"{plan.name} must be completed")
+        require("make check" in text, f"{plan.name} must document make check verification")
+
+
 def main():
     checks = [
         check_required_project_files,
         check_runtime_urls_are_https,
         check_bug_note_status,
         check_demo_token_logging,
+        check_docs_plans,
     ]
     try:
         for check in checks:
