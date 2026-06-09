@@ -19,6 +19,7 @@ Priority:
 - Guard API-level OAuth helpers before signing requests with missing consumer
   credentials
 - Avoid logging access tokens and token secrets
+- Avoid logging Twitter user IDs or screen names in demo console output
 - Avoid logging raw OAuth response bodies
 - Avoid logging tweet body text during validation failures
 - Generate OAuth nonces with cryptographic random bytes
@@ -56,7 +57,7 @@ make revocation and storage behavior clear.
 ## What We Will Not Merge (For Now)
 
 - Checked-in API credentials
-- Token logging
+- Token or account-identifier logging
 - Silent posting
 - Token storage changes without security notes
 

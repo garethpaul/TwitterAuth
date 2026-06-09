@@ -161,8 +161,8 @@ public class Demo : MonoBehaviour
             !string.IsNullOrEmpty(m_AccessTokenResponse.TokenSecret))
         {
             string log = "LoadTwitterUserInfo - succeeded";
-            log += "\n    UserId : " + m_AccessTokenResponse.UserId;
-            log += "\n    ScreenName : " + m_AccessTokenResponse.ScreenName;
+            log += "\n    UserId : <redacted>";
+            log += "\n    ScreenName : <redacted>";
             log += "\n    Token : <redacted>";
             log += "\n    TokenSecret : <redacted>";
             Debug.Log(log);
@@ -193,8 +193,8 @@ public class Demo : MonoBehaviour
         if (success)
         {
             string log = "OnAccessTokenCallback - succeeded";
-            log += "\n    UserId : " + response.UserId;
-            log += "\n    ScreenName : " + response.ScreenName;
+            log += "\n    UserId : <redacted>";
+            log += "\n    ScreenName : <redacted>";
             log += "\n    Token : <redacted>";
             log += "\n    TokenSecret : <redacted>";
             print(log);

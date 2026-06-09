@@ -12,6 +12,7 @@ DOCS_PLANS = ROOT / "docs/plans"
 CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-twitterauth-baseline.md"
 CONSUMER_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-consumer-credential-guards.md"
 TWEET_TEXT_LOG_PLAN = DOCS_PLANS / "2026-06-09-tweet-text-log-redaction.md"
+ACCOUNT_IDENTIFIER_LOG_PLAN = DOCS_PLANS / "2026-06-09-account-identifier-log-redaction.md"
 
 
 def fail(message):
@@ -70,6 +71,14 @@ def check_demo_token_logging():
     require('"\\n    TokenSecret : " +' not in demo, "demo must not log token secrets")
     require("Token : <redacted>" in demo, "demo logs must redact token values")
     require("TokenSecret : <redacted>" in demo, "demo logs must redact token secret values")
+
+
+def check_demo_account_identifier_logging():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    require('"\\n    UserId : " +' not in demo, "demo must not log Twitter user IDs")
+    require('"\\n    ScreenName : " +' not in demo, "demo must not log Twitter screen names")
+    require("UserId : <redacted>" in demo, "demo logs must redact Twitter user IDs")
+    require("ScreenName : <redacted>" in demo, "demo logs must redact Twitter screen names")
 
 
 def check_api_oauth_response_log_redaction():
@@ -285,6 +294,7 @@ def check_docs_plans():
     require(CANONICAL_PLAN in plans, f"{CANONICAL_PLAN.relative_to(ROOT)} must be present")
     require(CONSUMER_CREDENTIAL_PLAN in plans, f"{CONSUMER_CREDENTIAL_PLAN.relative_to(ROOT)} must be present")
     require(TWEET_TEXT_LOG_PLAN in plans, f"{TWEET_TEXT_LOG_PLAN.relative_to(ROOT)} must be present")
+    require(ACCOUNT_IDENTIFIER_LOG_PLAN in plans, f"{ACCOUNT_IDENTIFIER_LOG_PLAN.relative_to(ROOT)} must be present")
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -298,6 +308,7 @@ def main():
         check_runtime_urls_are_https,
         check_bug_note_status,
         check_demo_token_logging,
+        check_demo_account_identifier_logging,
         check_api_oauth_response_log_redaction,
         check_oauth_nonce_entropy,
         check_authorization_url_token_safety,

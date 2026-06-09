@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Redacted Twitter user IDs and screen names from successful OAuth demo logs.
+- Added static checker coverage for account-identifier log redaction.
 - Redacted tweet text from `PostTweet` validation failure logs.
 - Extended static checker coverage for tweet-text validation log redaction.
 - Guarded request-token, access-token, and tweet-post API helpers when consumer
