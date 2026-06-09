@@ -132,8 +132,17 @@ public class Demo : MonoBehaviour
 
         if (GUI.Button(rect, "Post Tweet"))
         {
-            StartCoroutine(API.PostTweet(m_Tweet, CONSUMER_KEY, CONSUMER_SECRET, m_AccessTokenResponse,
-                OnPostTweet));
+            if (m_AccessTokenResponse != null &&
+                !string.IsNullOrEmpty(m_AccessTokenResponse.Token) &&
+                !string.IsNullOrEmpty(m_AccessTokenResponse.TokenSecret))
+            {
+                StartCoroutine(API.PostTweet(m_Tweet, CONSUMER_KEY, CONSUMER_SECRET, m_AccessTokenResponse,
+                    OnPostTweet));
+            }
+            else
+            {
+                print("OnPostTweet - skipped. Access token is missing.");
+            }
         }
     }
 

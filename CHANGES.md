@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Guarded tweet submission when the Unity demo does not yet have an access
+  token.
 - Guarded PIN submission when the Unity demo does not yet have a request token.
 - Added canonical `docs/plans` coverage to the Unity static contract checker.
 - Redacted request/access token and token-secret values from Unity demo logs.

@@ -175,6 +175,15 @@ namespace Twitter
 
         public static IEnumerator PostTweet(string text, string consumerKey, string consumerSecret, AccessTokenResponse response, PostTweetCallback callback)
         {
+            if (response == null ||
+                string.IsNullOrEmpty(response.Token) ||
+                string.IsNullOrEmpty(response.TokenSecret))
+            {
+                Debug.Log("PostTweet - access token is missing.");
+                callback(false);
+                yield break;
+            }
+
             if (string.IsNullOrEmpty(text) || text.Length > 140)
             {
                 Debug.Log(string.Format("PostTweet - text[{0}] is empty or too long.", text));

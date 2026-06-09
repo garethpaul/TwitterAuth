@@ -73,6 +73,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   verification baseline.
 - See `docs/plans/2026-06-08-twitterauth-pin-guard.md` for the request-token
   guard on PIN submission.
+- See `docs/plans/2026-06-08-twitterauth-post-token-guard.md` for the
+  access-token guard on tweet submission.
 
 ## Contributing
 

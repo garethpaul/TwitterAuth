@@ -72,6 +72,7 @@ def check_demo_token_logging():
 
 def check_demo_access_flow_guards():
     demo = read_text("UnityTwitter/Assets/Demo.cs")
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
     require(
         "m_RequestTokenResponse != null" in demo,
         "PIN submission must guard missing request-token state",
@@ -79,6 +80,26 @@ def check_demo_access_flow_guards():
     require(
         "Request token is missing" in demo,
         "PIN submission guard must explain missing request-token state",
+    )
+    require(
+        "m_AccessTokenResponse != null" in demo,
+        "tweet submission must guard missing access-token state",
+    )
+    require(
+        "Access token is missing" in demo,
+        "tweet submission guard must explain missing access-token state",
+    )
+    require(
+        "response == null" in api and "string.IsNullOrEmpty(response.Token)" in api,
+        "PostTweet must guard missing access-token response before OAuth signing",
+    )
+    require(
+        "PostTweet - access token is missing." in api,
+        "PostTweet guard must log missing access-token state without secrets",
+    )
+    require(
+        "yield break;" in api,
+        "PostTweet guard must stop before building signed requests",
     )
 
 
