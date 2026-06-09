@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS_PLANS = ROOT / "docs/plans"
 CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-twitterauth-baseline.md"
 CONSUMER_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-consumer-credential-guards.md"
+TWEET_TEXT_LOG_PLAN = DOCS_PLANS / "2026-06-09-tweet-text-log-redaction.md"
 
 
 def fail(message):
@@ -162,6 +163,14 @@ def check_demo_access_flow_guards():
         "yield break;" in api,
         "PostTweet guard must stop before building signed requests",
     )
+    require(
+        "PostTweet - text[{0}] is empty or too long." not in api,
+        "PostTweet validation failures must not log tweet text",
+    )
+    require(
+        "PostTweet - text is empty or too long." in api,
+        "PostTweet validation failures must use a redacted text validation message",
+    )
 
 
 def check_access_token_exchange_guards():
@@ -275,6 +284,7 @@ def check_docs_plans():
     require(plans, "docs/plans must contain completed maintenance plans")
     require(CANONICAL_PLAN in plans, f"{CANONICAL_PLAN.relative_to(ROOT)} must be present")
     require(CONSUMER_CREDENTIAL_PLAN in plans, f"{CONSUMER_CREDENTIAL_PLAN.relative_to(ROOT)} must be present")
+    require(TWEET_TEXT_LOG_PLAN in plans, f"{TWEET_TEXT_LOG_PLAN.relative_to(ROOT)} must be present")
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")

@@ -220,7 +220,7 @@ namespace Twitter
 
             if (string.IsNullOrEmpty(text) || text.Length > 140)
             {
-                Debug.Log(string.Format("PostTweet - text[{0}] is empty or too long.", text));
+                Debug.Log("PostTweet - text is empty or too long.");
 
                 callback(false);
             }

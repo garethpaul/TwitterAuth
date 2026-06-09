@@ -20,6 +20,7 @@ Priority:
   credentials
 - Avoid logging access tokens and token secrets
 - Avoid logging raw OAuth response bodies
+- Avoid logging tweet body text during validation failures
 - Generate OAuth nonces with cryptographic random bytes
 - Guard authorization-page launches when request tokens are missing
 - Guard access-token exchanges when request tokens or PIN values are missing

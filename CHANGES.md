@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Redacted tweet text from `PostTweet` validation failure logs.
+- Extended static checker coverage for tweet-text validation log redaction.
 - Guarded request-token, access-token, and tweet-post API helpers when consumer
   credentials are missing before signed requests are built.
 - Added static checker coverage for API-level consumer credential guards.
