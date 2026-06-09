@@ -90,6 +90,26 @@ def check_api_oauth_response_log_redaction():
     )
 
 
+def check_oauth_nonce_entropy():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    require(
+        "new System.Random()" not in api,
+        "OAuth nonce generation must not use predictable System.Random",
+    )
+    require(
+        "RNGCryptoServiceProvider" in api,
+        "OAuth nonce generation must use cryptographic randomness",
+    )
+    require(
+        "byte[] nonceBytes" in api,
+        "OAuth nonce generation must draw random nonce bytes before formatting",
+    )
+    require(
+        'BitConverter.ToString(nonceBytes).Replace("-", string.Empty)' in api,
+        "OAuth nonce generation must format random bytes without separators",
+    )
+
+
 def check_demo_access_flow_guards():
     demo = read_text("UnityTwitter/Assets/Demo.cs")
     api = read_text("UnityTwitter/Assets/Twitter.cs")
@@ -142,6 +162,7 @@ def main():
         check_bug_note_status,
         check_demo_token_logging,
         check_api_oauth_response_log_redaction,
+        check_oauth_nonce_entropy,
         check_demo_access_flow_guards,
         check_docs_plans,
     ]

@@ -2,6 +2,9 @@
 
 ## 2026-06-09
 
+- Replaced predictable `System.Random` OAuth nonce generation with
+  cryptographic random bytes.
+- Added static checker coverage for OAuth nonce entropy.
 - Replaced raw OAuth response-body failure logs with redacted missing-field
   messages in the request-token and access-token helper paths.
 - Added static checker coverage for API-level OAuth response log redaction.

@@ -47,8 +47,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 ## Testing and Verification
 
-- `make check` runs static project, HTTPS endpoint, token-log redaction,
-  OAuth-flow guard, and completed-plan checks.
+- `make check` runs static project, HTTPS endpoint, token-log redaction, OAuth
+  nonce entropy, OAuth-flow guard, and completed-plan checks.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 - Legacy Unity editor validation for scene/runtime behavior
@@ -78,6 +78,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   access-token guard on tweet submission.
 - See `docs/plans/2026-06-09-oauth-response-log-redaction.md` for API-level
   OAuth response-body log redaction.
+- See `docs/plans/2026-06-09-oauth-nonce-entropy.md` for cryptographic OAuth
+  nonce generation coverage.
 
 ## Contributing
 

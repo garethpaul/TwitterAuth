@@ -358,8 +358,13 @@ namespace Twitter
 
         private static string GenerateNonce()
         {
-            // Just a simple implementation of a random number between 123400 and 9999999
-            return new System.Random().Next(123400, int.MaxValue).ToString("X", CultureInfo.InvariantCulture);
+            byte[] nonceBytes = new byte[16];
+            using (var generator = new RNGCryptoServiceProvider())
+            {
+                generator.GetBytes(nonceBytes);
+            }
+
+            return BitConverter.ToString(nonceBytes).Replace("-", string.Empty);
         }
 
         private static string NormalizeUrl(Uri url)
