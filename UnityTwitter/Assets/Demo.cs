@@ -105,8 +105,15 @@ public class Demo : MonoBehaviour
 
         if (GUI.Button(rect, "Enter PIN"))
         {
-            StartCoroutine(API.GetAccessToken(CONSUMER_KEY, CONSUMER_SECRET, m_RequestTokenResponse.Token, m_PIN,
-                OnAccessTokenCallback));
+            if (m_RequestTokenResponse != null && !string.IsNullOrEmpty(m_RequestTokenResponse.Token))
+            {
+                StartCoroutine(API.GetAccessToken(CONSUMER_KEY, CONSUMER_SECRET, m_RequestTokenResponse.Token, m_PIN,
+                    OnAccessTokenCallback));
+            }
+            else
+            {
+                print("OnAccessTokenCallback - skipped. Request token is missing.");
+            }
         }
 
         // Tweet Input

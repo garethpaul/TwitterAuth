@@ -71,6 +71,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-twitterauth-baseline.md` for the current static
   verification baseline.
+- See `docs/plans/2026-06-08-twitterauth-pin-guard.md` for the request-token
+  guard on PIN submission.
 
 ## Contributing
 

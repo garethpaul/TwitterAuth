@@ -70,6 +70,18 @@ def check_demo_token_logging():
     require("TokenSecret : <redacted>" in demo, "demo logs must redact token secret values")
 
 
+def check_demo_access_flow_guards():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    require(
+        "m_RequestTokenResponse != null" in demo,
+        "PIN submission must guard missing request-token state",
+    )
+    require(
+        "Request token is missing" in demo,
+        "PIN submission guard must explain missing request-token state",
+    )
+
+
 def check_docs_plans():
     require(DOCS_PLANS.is_dir(), "docs/plans must exist")
     plans = sorted(DOCS_PLANS.glob("*.md"))
@@ -88,6 +100,7 @@ def main():
         check_runtime_urls_are_https,
         check_bug_note_status,
         check_demo_token_logging,
+        check_demo_access_flow_guards,
         check_docs_plans,
     ]
     try:
