@@ -93,6 +93,13 @@ namespace Twitter
 
         public static IEnumerator GetAccessToken(string consumerKey, string consumerSecret, string requestToken, string pin, AccessTokenCallback callback)
         {
+            if (string.IsNullOrEmpty(requestToken) || string.IsNullOrEmpty(pin))
+            {
+                Debug.Log("GetAccessToken - request token or PIN is missing.");
+                callback(false, null);
+                yield break;
+            }
+
             WWW web = WWWAccessToken(consumerKey, consumerSecret, requestToken, pin);
 
             yield return web;

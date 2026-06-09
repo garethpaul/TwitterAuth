@@ -4,6 +4,8 @@
 
 - Guarded authorization-page launches when the request token is missing.
 - URL-encoded request tokens before interpolating them into authorization URLs.
+- Guarded access-token exchanges when the request token or PIN is missing.
+- Added static checker coverage for access-token exchange input guards.
 - Replaced predictable `System.Random` OAuth nonce generation with
   cryptographic random bytes.
 - Added static checker coverage for OAuth nonce entropy.

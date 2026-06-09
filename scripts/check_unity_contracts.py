@@ -163,6 +163,39 @@ def check_demo_access_flow_guards():
     )
 
 
+def check_access_token_exchange_guards():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    match = re.search(
+        r"public static IEnumerator GetAccessToken\([^)]*\)\s*\{"
+        r"(?P<preamble>.*?)WWW web = WWWAccessToken",
+        api,
+        re.DOTALL,
+    )
+    require(
+        match,
+        "GetAccessToken must validate inputs before building a signed request",
+    )
+
+    preamble = match.group("preamble")
+    require(
+        "string.IsNullOrEmpty(requestToken)" in preamble,
+        "GetAccessToken must guard missing request-token values before signing",
+    )
+    require(
+        "string.IsNullOrEmpty(pin)" in preamble,
+        "GetAccessToken must guard missing PIN values before signing",
+    )
+    require(
+        "GetAccessToken - request token or PIN is missing." in preamble,
+        "GetAccessToken guard must log missing request-token or PIN state",
+    )
+    require(
+        "callback(false, null);" in preamble and "yield break;" in preamble,
+        "GetAccessToken guard must fail the callback and stop before building "
+        "signed requests",
+    )
+
+
 def check_docs_plans():
     require(DOCS_PLANS.is_dir(), "docs/plans must exist")
     plans = sorted(DOCS_PLANS.glob("*.md"))
@@ -185,6 +218,7 @@ def main():
         check_oauth_nonce_entropy,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
+        check_access_token_exchange_guards,
         check_docs_plans,
     ]
     try:

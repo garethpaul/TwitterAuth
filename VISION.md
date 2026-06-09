@@ -20,6 +20,7 @@ Priority:
 - Avoid logging raw OAuth response bodies
 - Generate OAuth nonces with cryptographic random bytes
 - Guard authorization-page launches when request tokens are missing
+- Guard access-token exchanges when request tokens or PIN values are missing
 - Avoid exchanging PINs before a request token exists
 - Avoid posting tweets before an access token exists
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context
