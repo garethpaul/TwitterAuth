@@ -82,7 +82,13 @@ namespace Twitter
 
         public static void OpenAuthorizationPage(string requestToken)
         {
-            Application.OpenURL(string.Format(AuthorizationURL, requestToken));
+            if (string.IsNullOrEmpty(requestToken))
+            {
+                Debug.Log("OpenAuthorizationPage - request token is missing.");
+                return;
+            }
+
+            Application.OpenURL(string.Format(AuthorizationURL, UrlEncode(requestToken)));
         }
 
         public static IEnumerator GetAccessToken(string consumerKey, string consumerSecret, string requestToken, string pin, AccessTokenCallback callback)

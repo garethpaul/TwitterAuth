@@ -110,6 +110,26 @@ def check_oauth_nonce_entropy():
     )
 
 
+def check_authorization_url_token_safety():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    require(
+        "string.IsNullOrEmpty(requestToken)" in api,
+        "OpenAuthorizationPage must guard missing request-token values",
+    )
+    require(
+        "OpenAuthorizationPage - request token is missing." in api,
+        "OpenAuthorizationPage guard must log missing request-token state",
+    )
+    require(
+        "string.Format(AuthorizationURL, UrlEncode(requestToken))" in api,
+        "OpenAuthorizationPage must URL-encode request tokens",
+    )
+    require(
+        "string.Format(AuthorizationURL, requestToken)" not in api,
+        "OpenAuthorizationPage must not interpolate raw request-token values",
+    )
+
+
 def check_demo_access_flow_guards():
     demo = read_text("UnityTwitter/Assets/Demo.cs")
     api = read_text("UnityTwitter/Assets/Twitter.cs")
@@ -163,6 +183,7 @@ def main():
         check_demo_token_logging,
         check_api_oauth_response_log_redaction,
         check_oauth_nonce_entropy,
+        check_authorization_url_token_safety,
         check_demo_access_flow_guards,
         check_docs_plans,
     ]

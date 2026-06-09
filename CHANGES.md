@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Guarded authorization-page launches when the request token is missing.
+- URL-encoded request tokens before interpolating them into authorization URLs.
 - Replaced predictable `System.Random` OAuth nonce generation with
   cryptographic random bytes.
 - Added static checker coverage for OAuth nonce entropy.
