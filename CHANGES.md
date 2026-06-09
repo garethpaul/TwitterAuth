@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-09
+
+- Replaced raw OAuth response-body failure logs with redacted missing-field
+  messages in the request-token and access-token helper paths.
+- Added static checker coverage for API-level OAuth response log redaction.
+
 ## 2026-06-08
 
 - Guarded tweet submission when the Unity demo does not yet have an access

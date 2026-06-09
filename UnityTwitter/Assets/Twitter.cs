@@ -73,7 +73,7 @@ namespace Twitter
                 }
                 else
                 {
-                    Debug.Log(string.Format("GetRequestToken - failed. response : {0}", web.text));
+                    Debug.Log("GetRequestToken - failed. response missing token fields.");
 
                     callback(false, null);
                 }
@@ -115,7 +115,7 @@ namespace Twitter
                 }
                 else
                 {
-                    Debug.Log(string.Format("GetAccessToken - failed. response : {0}", web.text));
+                    Debug.Log("GetAccessToken - failed. response missing token fields.");
 
                     callback(false, null);
                 }

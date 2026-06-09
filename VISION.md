@@ -17,6 +17,7 @@ Priority:
 - Preserve the OAuth token exchange and Unity demo scene
 - Keep consumer keys and secrets configured by the developer, not committed
 - Avoid logging access tokens and token secrets
+- Avoid logging raw OAuth response bodies
 - Avoid exchanging PINs before a request token exists
 - Avoid posting tweets before an access token exists
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context

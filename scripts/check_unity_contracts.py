@@ -70,6 +70,26 @@ def check_demo_token_logging():
     require("TokenSecret : <redacted>" in demo, "demo logs must redact token secret values")
 
 
+def check_api_oauth_response_log_redaction():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    require(
+        'Debug.Log(string.Format("GetRequestToken - failed. response : {0}", web.text))' not in api,
+        "request-token failures must not log raw OAuth response bodies",
+    )
+    require(
+        'Debug.Log(string.Format("GetAccessToken - failed. response : {0}", web.text))' not in api,
+        "access-token failures must not log raw OAuth response bodies",
+    )
+    require(
+        "GetRequestToken - failed. response missing token fields." in api,
+        "request-token parse failures must use a redacted missing-field message",
+    )
+    require(
+        "GetAccessToken - failed. response missing token fields." in api,
+        "access-token parse failures must use a redacted missing-field message",
+    )
+
+
 def check_demo_access_flow_guards():
     demo = read_text("UnityTwitter/Assets/Demo.cs")
     api = read_text("UnityTwitter/Assets/Twitter.cs")
@@ -121,6 +141,7 @@ def main():
         check_runtime_urls_are_https,
         check_bug_note_status,
         check_demo_token_logging,
+        check_api_oauth_response_log_redaction,
         check_demo_access_flow_guards,
         check_docs_plans,
     ]
