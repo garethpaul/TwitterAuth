@@ -12,6 +12,7 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 ## Repository Contents
 
 - `README.md` - project overview and local usage notes
+- `.github/workflows/check.yml` - GitHub Actions baseline for `make check`
 - `docs` - source or example code
 - `SECURITY.md` - security reporting and disclosure guidance
 - `UnityTwitter` - source or example code
@@ -52,6 +53,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   input guard, API-level consumer credential guard, account-identifier log
   redaction, tweet-text validation log redaction, OAuth-flow guard, and
   completed-plan checks.
+- GitHub Actions runs the same `make check` static baseline on pushes and pull
+  requests; Unity editor execution remains optional and host-dependent.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 - Legacy Unity editor validation for scene/runtime behavior
@@ -93,6 +96,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   successful OAuth user ID and screen-name log redaction coverage.
 - See `docs/plans/2026-06-09-tweet-text-log-redaction.md` for tweet body
   validation log redaction coverage.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the lightweight GitHub
+  Actions baseline.
 
 ## Contributing
 
