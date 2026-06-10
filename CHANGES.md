@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Replaced provider-controlled OAuth transport and tweet response error details
+  in Unity logs with stable redacted failure messages.
 - Stopped loading or saving long-lived OAuth values through `PlayerPrefs`, kept
   credentials session-only, and deleted legacy plaintext preference values on
   startup.

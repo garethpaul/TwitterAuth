@@ -15,6 +15,7 @@ TWEET_TEXT_LOG_PLAN = DOCS_PLANS / "2026-06-09-tweet-text-log-redaction.md"
 ACCOUNT_IDENTIFIER_LOG_PLAN = DOCS_PLANS / "2026-06-09-account-identifier-log-redaction.md"
 CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 SESSION_ONLY_TOKEN_PLAN = DOCS_PLANS / "2026-06-10-session-only-oauth-tokens.md"
+PROVIDER_ERROR_LOG_PLAN = DOCS_PLANS / "2026-06-10-provider-error-log-redaction.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -119,6 +120,25 @@ def check_api_oauth_response_log_redaction():
         "GetAccessToken - failed. response missing token fields." in api,
         "access-token parse failures must use a redacted missing-field message",
     )
+
+
+def check_api_provider_error_log_redaction():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    for dynamic_log in (
+        'Debug.Log(string.Format("GetRequestToken - failed. error : {0}", web.error))',
+        'Debug.Log(string.Format("GetAccessToken - failed. error : {0}", web.error))',
+        'Debug.Log(string.Format("PostTweet - failed. {0}", web.error))',
+        'Debug.Log(string.Format("PostTweet - failed. {0}", error))',
+    ):
+        require(dynamic_log not in api, "API failures must not log provider-controlled error details")
+
+    for redacted_log in (
+        "GetRequestToken - request failed.",
+        "GetAccessToken - request failed.",
+        "PostTweet - request failed.",
+        "PostTweet - response reported an error.",
+    ):
+        require(redacted_log in api, f"API failure log is missing redacted message: {redacted_log}")
 
 
 def check_oauth_nonce_entropy():
@@ -349,6 +369,7 @@ def check_docs_plans():
     require(ACCOUNT_IDENTIFIER_LOG_PLAN in plans, f"{ACCOUNT_IDENTIFIER_LOG_PLAN.relative_to(ROOT)} must be present")
     require(CI_PLAN in plans, f"{CI_PLAN.relative_to(ROOT)} must be present")
     require(SESSION_ONLY_TOKEN_PLAN in plans, f"{SESSION_ONLY_TOKEN_PLAN.relative_to(ROOT)} must be present")
+    require(PROVIDER_ERROR_LOG_PLAN in plans, f"{PROVIDER_ERROR_LOG_PLAN.relative_to(ROOT)} must be present")
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -365,6 +386,7 @@ def main():
         check_demo_account_identifier_logging,
         check_session_only_oauth_tokens,
         check_api_oauth_response_log_redaction,
+        check_api_provider_error_log_redaction,
         check_oauth_nonce_entropy,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,

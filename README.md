@@ -54,8 +54,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` runs static project, HTTPS endpoint, authorization URL
   token-safety, token-log redaction, OAuth nonce entropy, access-token exchange
   input guard, API-level consumer credential guard, account-identifier log
-  redaction, tweet-text validation log redaction, session-only OAuth storage,
-  OAuth-flow guard, and completed-plan checks.
+  redaction, tweet-text validation log redaction, provider-error log redaction,
+  session-only OAuth storage, OAuth-flow guard, and completed-plan checks.
 - GitHub Actions runs the same `make check` static baseline on pushes and pull
   requests using Ubuntu 24.04, read-only permissions, immutable action pins,
   and cancellation for superseded runs. Unity editor execution remains
@@ -105,6 +105,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   Actions baseline.
 - See `docs/plans/2026-06-10-session-only-oauth-tokens.md` for the completed
   removal of plaintext OAuth credential persistence.
+- See `docs/plans/2026-06-10-provider-error-log-redaction.md` for transport and
+  API response error log redaction coverage.
 
 ## Contributing
 

@@ -23,6 +23,7 @@ Priority:
   values
 - Avoid logging Twitter user IDs or screen names in demo console output
 - Avoid logging raw OAuth response bodies
+- Avoid logging provider-controlled transport or API error details
 - Avoid logging tweet body text during validation failures
 - Generate OAuth nonces with cryptographic random bytes
 - Guard authorization-page launches when request tokens are missing
