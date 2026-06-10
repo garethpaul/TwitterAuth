@@ -3,9 +3,8 @@ using UnityEngine;
 
 public class Demo : MonoBehaviour
 {
-    // You need to save access token and secret for later use.
-    // You can keep using them whenever you need to access the user's Twitter account.
-    // They will be always valid until the user revokes the access to your application.
+    // Legacy releases stored long-lived OAuth values in PlayerPrefs. Keep the
+    // key names only so existing plaintext values can be removed on startup.
     private const string PLAYER_PREFS_TWITTER_USER_ID = "TwitterUserID";
 
     private const string PLAYER_PREFS_TWITTER_USER_SCREEN_NAME = "TwitterUserScreenName";
@@ -43,7 +42,8 @@ public class Demo : MonoBehaviour
     // Use this for initialization
     private void Start()
     {
-        LoadTwitterUserInfo();
+        ClearLegacyStoredCredentials();
+        m_AccessTokenResponse = new AccessTokenResponse();
     }
 
     // Update is called once per frame
@@ -146,27 +146,13 @@ public class Demo : MonoBehaviour
         }
     }
 
-    private void LoadTwitterUserInfo()
+    private void ClearLegacyStoredCredentials()
     {
-        m_AccessTokenResponse = new AccessTokenResponse();
-
-        m_AccessTokenResponse.UserId = PlayerPrefs.GetString(PLAYER_PREFS_TWITTER_USER_ID);
-        m_AccessTokenResponse.ScreenName = PlayerPrefs.GetString(PLAYER_PREFS_TWITTER_USER_SCREEN_NAME);
-        m_AccessTokenResponse.Token = PlayerPrefs.GetString(PLAYER_PREFS_TWITTER_USER_TOKEN);
-        m_AccessTokenResponse.TokenSecret = PlayerPrefs.GetString(PLAYER_PREFS_TWITTER_USER_TOKEN_SECRET);
-
-        if (!string.IsNullOrEmpty(m_AccessTokenResponse.Token) &&
-            !string.IsNullOrEmpty(m_AccessTokenResponse.ScreenName) &&
-            !string.IsNullOrEmpty(m_AccessTokenResponse.Token) &&
-            !string.IsNullOrEmpty(m_AccessTokenResponse.TokenSecret))
-        {
-            string log = "LoadTwitterUserInfo - succeeded";
-            log += "\n    UserId : <redacted>";
-            log += "\n    ScreenName : <redacted>";
-            log += "\n    Token : <redacted>";
-            log += "\n    TokenSecret : <redacted>";
-            Debug.Log(log);
-        }
+        PlayerPrefs.DeleteKey(PLAYER_PREFS_TWITTER_USER_ID);
+        PlayerPrefs.DeleteKey(PLAYER_PREFS_TWITTER_USER_SCREEN_NAME);
+        PlayerPrefs.DeleteKey(PLAYER_PREFS_TWITTER_USER_TOKEN);
+        PlayerPrefs.DeleteKey(PLAYER_PREFS_TWITTER_USER_TOKEN_SECRET);
+        PlayerPrefs.Save();
     }
 
     private void OnRequestTokenCallback(bool success, RequestTokenResponse response)
@@ -200,11 +186,6 @@ public class Demo : MonoBehaviour
             print(log);
 
             m_AccessTokenResponse = response;
-
-            PlayerPrefs.SetString(PLAYER_PREFS_TWITTER_USER_ID, response.UserId);
-            PlayerPrefs.SetString(PLAYER_PREFS_TWITTER_USER_SCREEN_NAME, response.ScreenName);
-            PlayerPrefs.SetString(PLAYER_PREFS_TWITTER_USER_TOKEN, response.Token);
-            PlayerPrefs.SetString(PLAYER_PREFS_TWITTER_USER_TOKEN_SECRET, response.TokenSecret);
         }
         else
         {

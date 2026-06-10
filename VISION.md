@@ -19,6 +19,8 @@ Priority:
 - Guard API-level OAuth helpers before signing requests with missing consumer
   credentials
 - Avoid logging access tokens and token secrets
+- Keep demo OAuth tokens session-only and remove legacy plaintext PlayerPrefs
+  values
 - Avoid logging Twitter user IDs or screen names in demo console output
 - Avoid logging raw OAuth response bodies
 - Avoid logging tweet body text during validation failures
@@ -35,7 +37,7 @@ Priority:
 Next priorities:
 
 - Add README setup notes for Unity and API credential configuration
-- Document secure token storage alternatives to plain PlayerPrefs
+- Document platform credential-store integration if persistent login is revived
 - Add a no-post demo path for authentication-only testing
 
 Contribution rules:

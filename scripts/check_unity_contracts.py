@@ -14,6 +14,7 @@ CONSUMER_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-consumer-credential-guards.m
 TWEET_TEXT_LOG_PLAN = DOCS_PLANS / "2026-06-09-tweet-text-log-redaction.md"
 ACCOUNT_IDENTIFIER_LOG_PLAN = DOCS_PLANS / "2026-06-09-account-identifier-log-redaction.md"
 CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
+SESSION_ONLY_TOKEN_PLAN = DOCS_PLANS / "2026-06-10-session-only-oauth-tokens.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -82,6 +83,22 @@ def check_demo_account_identifier_logging():
     require('"\\n    ScreenName : " +' not in demo, "demo must not log Twitter screen names")
     require("UserId : <redacted>" in demo, "demo logs must redact Twitter user IDs")
     require("ScreenName : <redacted>" in demo, "demo logs must redact Twitter screen names")
+
+
+def check_session_only_oauth_tokens():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    require("PlayerPrefs.GetString" not in demo, "demo must not load OAuth values from PlayerPrefs")
+    require("PlayerPrefs.SetString" not in demo, "demo must not persist OAuth values in PlayerPrefs")
+    require("ClearLegacyStoredCredentials();" in demo, "demo must clear legacy stored OAuth values on startup")
+    require("PlayerPrefs.Save();" in demo, "demo must flush legacy OAuth value deletion")
+    for key in [
+        "PLAYER_PREFS_TWITTER_USER_ID",
+        "PLAYER_PREFS_TWITTER_USER_SCREEN_NAME",
+        "PLAYER_PREFS_TWITTER_USER_TOKEN",
+        "PLAYER_PREFS_TWITTER_USER_TOKEN_SECRET",
+    ]:
+        require(f"PlayerPrefs.DeleteKey({key});" in demo, f"demo must delete legacy {key} storage")
+    require("m_AccessTokenResponse = response;" in demo, "successful OAuth tokens must remain available in memory")
 
 
 def check_api_oauth_response_log_redaction():
@@ -295,6 +312,9 @@ def check_ci_workflow():
     for fragment in [
         "permissions:\n  contents: read",
         "timeout-minutes: 10",
+        "runs-on: ubuntu-24.04",
+        "concurrency:",
+        "cancel-in-progress: true",
         'python-version: ["3.10", "3.12", "3.14"]',
         "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
         "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
@@ -303,6 +323,17 @@ def check_ci_workflow():
     ]:
         require(fragment in workflow, f"CI workflow must include {fragment}")
     require("@v" not in workflow, "CI actions must use immutable commits")
+    require("ubuntu-latest" not in workflow, "CI workflow must not use a floating Ubuntu runner")
+    require("# v6.0.3" in workflow, "checkout pin annotation must identify the exact release")
+    require("# v6.2.0" in workflow, "setup-python pin annotation must identify the exact release")
+
+    makefile = read_text("Makefile")
+    require(
+        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile,
+        "Makefile must resolve commands from the repository root",
+    )
+    require('"$(ROOT)/scripts/check_unity_contracts.py"' in makefile, "Makefile must use the rooted checker path")
+    require('"$(ROOT)/UnityTwitter"' in makefile, "Makefile must use the rooted Unity project path")
 
     readme = read_text("README.md")
     require("GitHub Actions" in readme, "README must document the GitHub Actions check")
@@ -317,6 +348,7 @@ def check_docs_plans():
     require(TWEET_TEXT_LOG_PLAN in plans, f"{TWEET_TEXT_LOG_PLAN.relative_to(ROOT)} must be present")
     require(ACCOUNT_IDENTIFIER_LOG_PLAN in plans, f"{ACCOUNT_IDENTIFIER_LOG_PLAN.relative_to(ROOT)} must be present")
     require(CI_PLAN in plans, f"{CI_PLAN.relative_to(ROOT)} must be present")
+    require(SESSION_ONLY_TOKEN_PLAN in plans, f"{SESSION_ONLY_TOKEN_PLAN.relative_to(ROOT)} must be present")
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -331,6 +363,7 @@ def main():
         check_bug_note_status,
         check_demo_token_logging,
         check_demo_account_identifier_logging,
+        check_session_only_oauth_tokens,
         check_api_oauth_response_log_redaction,
         check_oauth_nonce_entropy,
         check_authorization_url_token_safety,

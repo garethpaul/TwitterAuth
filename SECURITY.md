@@ -33,6 +33,9 @@ Helpful reports include:
 - Review found secret-like configuration names that require careful review before use; changes in those areas should receive security-focused review before merge.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 - GitHub Actions runs the static `make check` baseline; review changes to CI, checker scripts, and Unity project metadata as part of the security surface.
+- The demo keeps OAuth access tokens in memory only and deletes preference keys
+  used by older revisions. Production applications should use a platform
+  credential store if tokens must survive process restarts.
 
 ## Service and API Notes
 
