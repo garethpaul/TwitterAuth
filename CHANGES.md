@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-12
+
+- Replaced unanchored OAuth response regex extraction with exact-key form
+  parsing, percent decoding, and fail-closed malformed-escape handling.
+- Ignored Python bytecode caches produced by local contract compilation.
+
 ## 2026-06-10
 
 - Replaced provider-controlled OAuth transport and tweet response error details

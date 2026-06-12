@@ -55,7 +55,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   token-safety, token-log redaction, OAuth nonce entropy, access-token exchange
   input guard, API-level consumer credential guard, account-identifier log
   redaction, tweet-text validation log redaction, provider-error log redaction,
-  session-only OAuth storage, OAuth-flow guard, and completed-plan checks.
+  exact-key OAuth response parsing, session-only OAuth storage, OAuth-flow
+  guard, and completed-plan checks.
 - GitHub Actions runs the same `make check` static baseline on pushes and pull
   requests using Ubuntu 24.04, read-only permissions, immutable action pins,
   disabled checkout credential persistence, and cancellation for superseded
@@ -107,6 +108,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   removal of plaintext OAuth credential persistence.
 - See `docs/plans/2026-06-10-provider-error-log-redaction.md` for transport and
   API response error log redaction coverage.
+- See `docs/plans/2026-06-12-oauth-response-field-parsing.md` for exact-key,
+  decoded, fail-closed OAuth response parsing.
 
 ## Contributing
 

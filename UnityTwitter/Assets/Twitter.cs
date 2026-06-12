@@ -69,8 +69,8 @@ namespace Twitter
             {
                 RequestTokenResponse response = new RequestTokenResponse
                                                 {
-                                                    Token = Regex.Match(web.text, @"oauth_token=([^&]+)").Groups[1].Value,
-                                                    TokenSecret = Regex.Match(web.text, @"oauth_token_secret=([^&]+)").Groups[1].Value,
+                                                    Token = FormValue(web.text, "oauth_token"),
+                                                    TokenSecret = FormValue(web.text, "oauth_token_secret"),
                                                 };
 
                 if (!string.IsNullOrEmpty(response.Token) &&
@@ -127,10 +127,10 @@ namespace Twitter
             {
                 AccessTokenResponse response = new AccessTokenResponse
                                                {
-                                                   Token = Regex.Match(web.text, @"oauth_token=([^&]+)").Groups[1].Value,
-                                                   TokenSecret = Regex.Match(web.text, @"oauth_token_secret=([^&]+)").Groups[1].Value,
-                                                   UserId = Regex.Match(web.text, @"user_id=([^&]+)").Groups[1].Value,
-                                                   ScreenName = Regex.Match(web.text, @"screen_name=([^&]+)").Groups[1].Value
+                                                   Token = FormValue(web.text, "oauth_token"),
+                                                   TokenSecret = FormValue(web.text, "oauth_token_secret"),
+                                                   UserId = FormValue(web.text, "user_id"),
+                                                   ScreenName = FormValue(web.text, "screen_name")
                                                };
 
                 if (!string.IsNullOrEmpty(response.Token) &&
@@ -443,6 +443,29 @@ namespace Twitter
             value = value.Replace("%7E", "~");
 
             return value;
+        }
+
+        private static string FormValue(string form, string key)
+        {
+            if (string.IsNullOrEmpty(form) || string.IsNullOrEmpty(key))
+            {
+                return string.Empty;
+            }
+
+            Match match = Regex.Match(form, @"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)");
+            if (!match.Success)
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                return Uri.UnescapeDataString(match.Groups[1].Value.Replace("+", " "));
+            }
+            catch (UriFormatException)
+            {
+                return string.Empty;
+            }
         }
 
         private static string UrlEncode(IEnumerable<KeyValuePair<string, string>> parameters)

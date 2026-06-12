@@ -16,6 +16,7 @@ ACCOUNT_IDENTIFIER_LOG_PLAN = DOCS_PLANS / "2026-06-09-account-identifier-log-re
 CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 SESSION_ONLY_TOKEN_PLAN = DOCS_PLANS / "2026-06-10-session-only-oauth-tokens.md"
 PROVIDER_ERROR_LOG_PLAN = DOCS_PLANS / "2026-06-10-provider-error-log-redaction.md"
+OAUTH_RESPONSE_FIELD_PLAN = DOCS_PLANS / "2026-06-12-oauth-response-field-parsing.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -53,6 +54,10 @@ def workflow_step_block(workflow, action):
 
 
 def check_required_project_files():
+    gitignore = read_text(".gitignore")
+    require("__pycache__/" in gitignore, "Python bytecode cache directories must be ignored")
+    require("*.py[cod]" in gitignore, "Python bytecode files must be ignored")
+
     for relative_path in [
         "UnityTwitter/Assets/Demo.cs",
         "UnityTwitter/Assets/Twitter.cs",
@@ -158,6 +163,32 @@ def check_api_provider_error_log_redaction():
         "PostTweet - response reported an error.",
     ):
         require(redacted_log in api, f"API failure log is missing redacted message: {redacted_log}")
+
+
+def check_oauth_response_field_parsing():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+
+    for field in ["oauth_token", "oauth_token_secret", "user_id", "screen_name"]:
+        require(
+            f'Regex.Match(web.text, @"{field}=([^&]+)")' not in api,
+            f"OAuth response field {field} must not use unanchored direct regex extraction",
+        )
+    for assignment in [
+        'Token = FormValue(web.text, "oauth_token")',
+        'TokenSecret = FormValue(web.text, "oauth_token_secret")',
+        'UserId = FormValue(web.text, "user_id")',
+        'ScreenName = FormValue(web.text, "screen_name")',
+    ]:
+        require(assignment in api, f"OAuth response parsing must include {assignment}")
+    require(
+        'Regex.Match(form, @"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)")' in api,
+        "OAuth response parser must match exact form field names",
+    )
+    require(
+        'Uri.UnescapeDataString(match.Groups[1].Value.Replace("+", " "))' in api,
+        "OAuth response parser must decode form values",
+    )
+    require("catch (UriFormatException)" in api, "malformed OAuth response escaping must fail closed")
 
 
 def check_oauth_nonce_entropy():
@@ -407,6 +438,10 @@ def check_docs_plans():
     require(CI_PLAN in plans, f"{CI_PLAN.relative_to(ROOT)} must be present")
     require(SESSION_ONLY_TOKEN_PLAN in plans, f"{SESSION_ONLY_TOKEN_PLAN.relative_to(ROOT)} must be present")
     require(PROVIDER_ERROR_LOG_PLAN in plans, f"{PROVIDER_ERROR_LOG_PLAN.relative_to(ROOT)} must be present")
+    require(
+        OAUTH_RESPONSE_FIELD_PLAN in plans,
+        f"{OAUTH_RESPONSE_FIELD_PLAN.relative_to(ROOT)} must be present",
+    )
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -424,6 +459,7 @@ def main():
         check_session_only_oauth_tokens,
         check_api_oauth_response_log_redaction,
         check_api_provider_error_log_redaction,
+        check_oauth_response_field_parsing,
         check_oauth_nonce_entropy,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
