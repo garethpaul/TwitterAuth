@@ -12,6 +12,8 @@ workflow enforcing them on changes to authentication and logging code.
 - Added read-only GitHub Actions checks on Python 3.10, 3.12, and 3.14.
 - Pinned actions to immutable commits, disabled checkout credential
   persistence, and bounded job runtime.
+- Required the checkout credential setting to remain attached to the checkout
+  action rather than merely appearing elsewhere in the workflow.
 - Extended repository contracts and documentation to protect the hosted gate.
 
 ## Verification

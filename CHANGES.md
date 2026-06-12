@@ -14,6 +14,8 @@
   `make check` baseline.
 - Extended the Unity contract checker to require the CI workflow and completed
   CI plan.
+- Bound the checkout credential-persistence assertion to the checkout step so
+  moving the setting to another action cannot satisfy the hosted CI contract.
 
 ## 2026-06-09
 

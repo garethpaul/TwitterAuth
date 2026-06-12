@@ -33,6 +33,25 @@ def require(condition, message):
         raise AssertionError(message)
 
 
+def workflow_step_block(workflow, action):
+    lines = workflow.splitlines()
+    prefix = f"- uses: {action}"
+
+    for index, line in enumerate(lines):
+        stripped_line = line.strip()
+        if stripped_line == prefix or stripped_line.startswith(f"{prefix} #"):
+            indentation = len(line) - len(line.lstrip())
+            block = [line]
+            for following_line in lines[index + 1 :]:
+                following_indentation = len(following_line) - len(following_line.lstrip())
+                if following_line.strip() and following_indentation <= indentation:
+                    break
+                block.append(following_line)
+            return "\n".join(block)
+
+    raise AssertionError(f"CI workflow must define the {action} step")
+
+
 def check_required_project_files():
     for relative_path in [
         "UnityTwitter/Assets/Demo.cs",
@@ -329,6 +348,7 @@ def check_api_consumer_credential_guards():
 
 def check_ci_workflow():
     workflow = read_text(".github/workflows/check.yml")
+    checkout_action = "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"
     for fragment in [
         "permissions:\n  contents: read",
         "timeout-minutes: 10",
@@ -336,7 +356,7 @@ def check_ci_workflow():
         "concurrency:",
         "cancel-in-progress: true",
         'python-version: ["3.10", "3.12", "3.14"]',
-        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        checkout_action,
         "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
         "persist-credentials: false",
         "workflow_dispatch:",
@@ -351,6 +371,11 @@ def check_ci_workflow():
     require(workflow.count("actions/setup-python@") == 1, "CI workflow must define exactly one setup-python action")
     require(workflow.count("persist-credentials:") == 1, "checkout credential persistence must be configured once")
     require("persist-credentials: true" not in workflow, "checkout credentials must not persist")
+    checkout_step = workflow_step_block(workflow, checkout_action)
+    require(
+        "\n        with:\n          persist-credentials: false" in checkout_step,
+        "checkout step must disable credential persistence in its with block",
+    )
 
     makefile = read_text("Makefile")
     require(
