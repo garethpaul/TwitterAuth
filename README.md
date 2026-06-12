@@ -43,6 +43,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Running or Using the Project
 
 - Open `UnityTwitter` with a compatible legacy Unity editor and inspect the demo scene.
+- OAuth access tokens are kept only for the active demo session. Startup
+  removes values written to `PlayerPrefs` by older revisions, so users must
+  authenticate again after restarting the app.
 - Run `make check` for static checks. The build step runs Unity only on hosts
   where `unity` is installed.
 
@@ -51,10 +54,12 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - `make check` runs static project, HTTPS endpoint, authorization URL
   token-safety, token-log redaction, OAuth nonce entropy, access-token exchange
   input guard, API-level consumer credential guard, account-identifier log
-  redaction, tweet-text validation log redaction, OAuth-flow guard, and
-  completed-plan checks.
+  redaction, tweet-text validation log redaction, provider-error log redaction,
+  session-only OAuth storage, OAuth-flow guard, and completed-plan checks.
 - GitHub Actions runs the same `make check` static baseline on pushes and pull
-  requests; Unity editor execution remains optional and host-dependent.
+  requests using Ubuntu 24.04, read-only permissions, immutable action pins,
+  disabled checkout credential persistence, and cancellation for superseded
+  runs. Unity editor execution remains optional and host-dependent.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
 - Legacy Unity editor validation for scene/runtime behavior
@@ -98,6 +103,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
   validation log redaction coverage.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the lightweight GitHub
   Actions baseline.
+- See `docs/plans/2026-06-10-session-only-oauth-tokens.md` for the completed
+  removal of plaintext OAuth credential persistence.
+- See `docs/plans/2026-06-10-provider-error-log-redaction.md` for transport and
+  API response error log redaction coverage.
 
 ## Contributing
 

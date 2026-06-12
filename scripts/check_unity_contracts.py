@@ -14,6 +14,8 @@ CONSUMER_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-consumer-credential-guards.m
 TWEET_TEXT_LOG_PLAN = DOCS_PLANS / "2026-06-09-tweet-text-log-redaction.md"
 ACCOUNT_IDENTIFIER_LOG_PLAN = DOCS_PLANS / "2026-06-09-account-identifier-log-redaction.md"
 CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
+SESSION_ONLY_TOKEN_PLAN = DOCS_PLANS / "2026-06-10-session-only-oauth-tokens.md"
+PROVIDER_ERROR_LOG_PLAN = DOCS_PLANS / "2026-06-10-provider-error-log-redaction.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -84,6 +86,22 @@ def check_demo_account_identifier_logging():
     require("ScreenName : <redacted>" in demo, "demo logs must redact Twitter screen names")
 
 
+def check_session_only_oauth_tokens():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    require("PlayerPrefs.GetString" not in demo, "demo must not load OAuth values from PlayerPrefs")
+    require("PlayerPrefs.SetString" not in demo, "demo must not persist OAuth values in PlayerPrefs")
+    require("ClearLegacyStoredCredentials();" in demo, "demo must clear legacy stored OAuth values on startup")
+    require("PlayerPrefs.Save();" in demo, "demo must flush legacy OAuth value deletion")
+    for key in [
+        "PLAYER_PREFS_TWITTER_USER_ID",
+        "PLAYER_PREFS_TWITTER_USER_SCREEN_NAME",
+        "PLAYER_PREFS_TWITTER_USER_TOKEN",
+        "PLAYER_PREFS_TWITTER_USER_TOKEN_SECRET",
+    ]:
+        require(f"PlayerPrefs.DeleteKey({key});" in demo, f"demo must delete legacy {key} storage")
+    require("m_AccessTokenResponse = response;" in demo, "successful OAuth tokens must remain available in memory")
+
+
 def check_api_oauth_response_log_redaction():
     api = read_text("UnityTwitter/Assets/Twitter.cs")
     require(
@@ -102,6 +120,25 @@ def check_api_oauth_response_log_redaction():
         "GetAccessToken - failed. response missing token fields." in api,
         "access-token parse failures must use a redacted missing-field message",
     )
+
+
+def check_api_provider_error_log_redaction():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    for dynamic_log in (
+        'Debug.Log(string.Format("GetRequestToken - failed. error : {0}", web.error))',
+        'Debug.Log(string.Format("GetAccessToken - failed. error : {0}", web.error))',
+        'Debug.Log(string.Format("PostTweet - failed. {0}", web.error))',
+        'Debug.Log(string.Format("PostTweet - failed. {0}", error))',
+    ):
+        require(dynamic_log not in api, "API failures must not log provider-controlled error details")
+
+    for redacted_log in (
+        "GetRequestToken - request failed.",
+        "GetAccessToken - request failed.",
+        "PostTweet - request failed.",
+        "PostTweet - response reported an error.",
+    ):
+        require(redacted_log in api, f"API failure log is missing redacted message: {redacted_log}")
 
 
 def check_oauth_nonce_entropy():
@@ -293,15 +330,45 @@ def check_api_consumer_credential_guards():
 def check_ci_workflow():
     workflow = read_text(".github/workflows/check.yml")
     for fragment in [
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        'python-version: "3.12"',
+        "permissions:\n  contents: read",
+        "timeout-minutes: 10",
+        "runs-on: ubuntu-24.04",
+        "concurrency:",
+        "cancel-in-progress: true",
+        'python-version: ["3.10", "3.12", "3.14"]',
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+        "persist-credentials: false",
+        "workflow_dispatch:",
         "make check",
     ]:
         require(fragment in workflow, f"CI workflow must include {fragment}")
+    require("@v" not in workflow, "CI actions must use immutable commits")
+    require("ubuntu-latest" not in workflow, "CI workflow must not use a floating Ubuntu runner")
+    require("# v6.0.3" in workflow, "checkout pin annotation must identify the exact release")
+    require("# v6.2.0" in workflow, "setup-python pin annotation must identify the exact release")
+    require(workflow.count("actions/checkout@") == 1, "CI workflow must define exactly one checkout action")
+    require(workflow.count("actions/setup-python@") == 1, "CI workflow must define exactly one setup-python action")
+    require(workflow.count("persist-credentials:") == 1, "checkout credential persistence must be configured once")
+    require("persist-credentials: true" not in workflow, "checkout credentials must not persist")
 
-    readme = read_text("README.md")
-    require("GitHub Actions" in readme, "README must document the GitHub Actions check")
+    makefile = read_text("Makefile")
+    require(
+        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile,
+        "Makefile must resolve commands from the repository root",
+    )
+    require('"$(ROOT)/scripts/check_unity_contracts.py"' in makefile, "Makefile must use the rooted checker path")
+    require('"$(ROOT)/UnityTwitter"' in makefile, "Makefile must use the rooted Unity project path")
+
+    documentation_contracts = {
+        "README.md": "GitHub Actions runs the same `make check` static baseline",
+        "SECURITY.md": "GitHub Actions runs the static `make check` baseline",
+        "VISION.md": "Keep the static `make check` baseline running in GitHub Actions",
+        "CHANGES.md": "Added a pinned, read-only GitHub Actions matrix",
+        "docs/plans/2026-06-10-ci-baseline.md": "Added read-only GitHub Actions checks",
+    }
+    for relative_path, fragment in documentation_contracts.items():
+        require(fragment in read_text(relative_path), f"{relative_path} must document the GitHub Actions baseline")
 
 
 def check_docs_plans():
@@ -313,6 +380,8 @@ def check_docs_plans():
     require(TWEET_TEXT_LOG_PLAN in plans, f"{TWEET_TEXT_LOG_PLAN.relative_to(ROOT)} must be present")
     require(ACCOUNT_IDENTIFIER_LOG_PLAN in plans, f"{ACCOUNT_IDENTIFIER_LOG_PLAN.relative_to(ROOT)} must be present")
     require(CI_PLAN in plans, f"{CI_PLAN.relative_to(ROOT)} must be present")
+    require(SESSION_ONLY_TOKEN_PLAN in plans, f"{SESSION_ONLY_TOKEN_PLAN.relative_to(ROOT)} must be present")
+    require(PROVIDER_ERROR_LOG_PLAN in plans, f"{PROVIDER_ERROR_LOG_PLAN.relative_to(ROOT)} must be present")
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -327,7 +396,9 @@ def main():
         check_bug_note_status,
         check_demo_token_logging,
         check_demo_account_identifier_logging,
+        check_session_only_oauth_tokens,
         check_api_oauth_response_log_redaction,
+        check_api_provider_error_log_redaction,
         check_oauth_nonce_entropy,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,

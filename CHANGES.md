@@ -2,7 +2,15 @@
 
 ## 2026-06-10
 
-- Added a lightweight GitHub Actions workflow that runs the static
+- Replaced provider-controlled OAuth transport and tweet response error details
+  in Unity logs with stable redacted failure messages.
+- Stopped loading or saving long-lived OAuth values through `PlayerPrefs`, kept
+  credentials session-only, and deleted legacy plaintext preference values on
+  startup.
+- Made local verification root-independent and fixed hosted runner and action
+  release annotations to reviewed versions.
+- Added a pinned, read-only GitHub Actions matrix on Python 3.10, 3.12, and
+  3.14 that disables checkout credential persistence and runs the static
   `make check` baseline.
 - Extended the Unity contract checker to require the CI workflow and completed
   CI plan.

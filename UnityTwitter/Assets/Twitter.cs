@@ -62,7 +62,7 @@ namespace Twitter
 
             if (!string.IsNullOrEmpty(web.error))
             {
-                Debug.Log(string.Format("GetRequestToken - failed. error : {0}", web.error));
+                Debug.Log("GetRequestToken - request failed.");
                 callback(false, null);
             }
             else
@@ -120,7 +120,7 @@ namespace Twitter
 
             if (!string.IsNullOrEmpty(web.error))
             {
-                Debug.Log(string.Format("GetAccessToken - failed. error : {0}", web.error));
+                Debug.Log("GetAccessToken - request failed.");
                 callback(false, null);
             }
             else
@@ -242,7 +242,7 @@ namespace Twitter
 
                 if (!string.IsNullOrEmpty(web.error))
                 {
-                    Debug.Log(string.Format("PostTweet - failed. {0}", web.error));
+                    Debug.Log("PostTweet - request failed.");
                     callback(false);
                 }
                 else
@@ -251,7 +251,7 @@ namespace Twitter
 
                     if (!string.IsNullOrEmpty(error))
                     {
-                        Debug.Log(string.Format("PostTweet - failed. {0}", error));
+                        Debug.Log("PostTweet - response reported an error.");
                         callback(false);
                     }
                     else

@@ -1,28 +1,24 @@
-# TwitterAuth CI Baseline
+# CI Baseline
 
 Status: Completed
 
-## Scope
+## Context
 
-Run the legacy Unity TwitterAuth static contract in GitHub Actions without
-requiring a Unity editor on the CI host.
+The legacy Unity OAuth sample had comprehensive static contracts but no hosted
+workflow enforcing them on changes to authentication and logging code.
 
-## Completed Work
+## Changes
 
-- Added `.github/workflows/check.yml` to run `make check` on pushes, pull
-  requests, and manual dispatches.
-- Set up Python 3.12 before running the static Unity contract checker.
-- Extended `scripts/check_unity_contracts.py` to require the CI workflow and
-  this completed maintenance plan.
-- Updated README, VISION, SECURITY, and CHANGES with the CI baseline.
+- Added read-only GitHub Actions checks on Python 3.10, 3.12, and 3.14.
+- Pinned actions to immutable commits, disabled checkout credential
+  persistence, and bounded job runtime.
+- Extended repository contracts and documentation to protect the hosted gate.
 
 ## Verification
 
-- `python3 scripts/check_unity_contracts.py`
 - `make check`
+- `python3 -m py_compile scripts/check_unity_contracts.py`
 - `git diff --check`
 
-## Follow-Up Candidates
-
-- Add a Unity batchmode job once the expected editor version and license setup
-  are documented.
+Unity editor execution remains optional until the expected editor version and
+license setup are documented for hosted runners.
