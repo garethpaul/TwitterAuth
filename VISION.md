@@ -30,6 +30,7 @@ Priority:
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context
 - Keep runtime network endpoints on HTTPS
 - Keep demo logs redacted when OAuth succeeds
+- Keep the static `make check` baseline running in GitHub Actions
 
 Next priorities:
 

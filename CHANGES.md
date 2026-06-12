@@ -1,5 +1,12 @@
 # Changes
 
+## 2026-06-10
+
+- Added a lightweight GitHub Actions workflow that runs the static
+  `make check` baseline.
+- Extended the Unity contract checker to require the CI workflow and completed
+  CI plan.
+
 ## 2026-06-09
 
 - Redacted Twitter user IDs and screen names from successful OAuth demo logs.

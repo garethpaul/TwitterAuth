@@ -13,6 +13,8 @@ CANONICAL_PLAN = DOCS_PLANS / "2026-06-08-twitterauth-baseline.md"
 CONSUMER_CREDENTIAL_PLAN = DOCS_PLANS / "2026-06-09-consumer-credential-guards.md"
 TWEET_TEXT_LOG_PLAN = DOCS_PLANS / "2026-06-09-tweet-text-log-redaction.md"
 ACCOUNT_IDENTIFIER_LOG_PLAN = DOCS_PLANS / "2026-06-09-account-identifier-log-redaction.md"
+CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
+CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
 def fail(message):
@@ -35,6 +37,7 @@ def check_required_project_files():
         "UnityTwitter/Assets/Twitter.cs",
         "UnityTwitter/Assets/Demo.unity",
         "UnityTwitter/ProjectSettings/ProjectSettings.asset",
+        ".github/workflows/check.yml",
         "docs/readme-overview.svg",
         "docs/bugs/p2-plain-http-runtime-endpoint-af8489704cbb4afe.md",
     ]:
@@ -287,6 +290,20 @@ def check_api_consumer_credential_guards():
     )
 
 
+def check_ci_workflow():
+    workflow = read_text(".github/workflows/check.yml")
+    for fragment in [
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        'python-version: "3.12"',
+        "make check",
+    ]:
+        require(fragment in workflow, f"CI workflow must include {fragment}")
+
+    readme = read_text("README.md")
+    require("GitHub Actions" in readme, "README must document the GitHub Actions check")
+
+
 def check_docs_plans():
     require(DOCS_PLANS.is_dir(), "docs/plans must exist")
     plans = sorted(DOCS_PLANS.glob("*.md"))
@@ -295,6 +312,7 @@ def check_docs_plans():
     require(CONSUMER_CREDENTIAL_PLAN in plans, f"{CONSUMER_CREDENTIAL_PLAN.relative_to(ROOT)} must be present")
     require(TWEET_TEXT_LOG_PLAN in plans, f"{TWEET_TEXT_LOG_PLAN.relative_to(ROOT)} must be present")
     require(ACCOUNT_IDENTIFIER_LOG_PLAN in plans, f"{ACCOUNT_IDENTIFIER_LOG_PLAN.relative_to(ROOT)} must be present")
+    require(CI_PLAN in plans, f"{CI_PLAN.relative_to(ROOT)} must be present")
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -315,6 +333,7 @@ def main():
         check_demo_access_flow_guards,
         check_access_token_exchange_guards,
         check_api_consumer_credential_guards,
+        check_ci_workflow,
         check_docs_plans,
     ]
     try:
