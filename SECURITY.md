@@ -36,6 +36,8 @@ Helpful reports include:
 - The demo keeps OAuth access tokens in memory only and deletes preference keys
   used by older revisions. Production applications should use a platform
   credential store if tokens must survive process restarts.
+- OAuth credentials, request tokens, PINs, and access-token fields reject
+  whitespace-only values before signing, provider requests, or browser launch.
 
 ## Service and API Notes
 

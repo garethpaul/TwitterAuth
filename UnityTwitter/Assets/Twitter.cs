@@ -73,8 +73,8 @@ namespace Twitter
                                                     TokenSecret = FormValue(web.text, "oauth_token_secret"),
                                                 };
 
-                if (!string.IsNullOrEmpty(response.Token) &&
-                    !string.IsNullOrEmpty(response.TokenSecret))
+                if (!OAuthValueIsMissing(response.Token) &&
+                    !OAuthValueIsMissing(response.TokenSecret))
                 {
                     callback(true, response);
                 }
@@ -89,7 +89,7 @@ namespace Twitter
 
         public static void OpenAuthorizationPage(string requestToken)
         {
-            if (string.IsNullOrEmpty(requestToken))
+            if (OAuthValueIsMissing(requestToken))
             {
                 Debug.Log("OpenAuthorizationPage - request token is missing.");
                 return;
@@ -107,7 +107,7 @@ namespace Twitter
                 yield break;
             }
 
-            if (string.IsNullOrEmpty(requestToken) || string.IsNullOrEmpty(pin))
+            if (OAuthValueIsMissing(requestToken) || OAuthValueIsMissing(pin))
             {
                 Debug.Log("GetAccessToken - request token or PIN is missing.");
                 callback(false, null);
@@ -133,10 +133,10 @@ namespace Twitter
                                                    ScreenName = FormValue(web.text, "screen_name")
                                                };
 
-                if (!string.IsNullOrEmpty(response.Token) &&
-                    !string.IsNullOrEmpty(response.TokenSecret) &&
-                    !string.IsNullOrEmpty(response.UserId) &&
-                    !string.IsNullOrEmpty(response.ScreenName))
+                if (!OAuthValueIsMissing(response.Token) &&
+                    !OAuthValueIsMissing(response.TokenSecret) &&
+                    !OAuthValueIsMissing(response.UserId) &&
+                    !OAuthValueIsMissing(response.ScreenName))
                 {
                     callback(true, response);
                 }
@@ -210,8 +210,8 @@ namespace Twitter
             }
 
             if (response == null ||
-                string.IsNullOrEmpty(response.Token) ||
-                string.IsNullOrEmpty(response.TokenSecret))
+                OAuthValueIsMissing(response.Token) ||
+                OAuthValueIsMissing(response.TokenSecret))
             {
                 Debug.Log("PostTweet - access token is missing.");
                 callback(false);
@@ -334,7 +334,12 @@ namespace Twitter
 
         private static bool ConsumerCredentialsAreMissing(string consumerKey, string consumerSecret)
         {
-            return string.IsNullOrEmpty(consumerKey) || string.IsNullOrEmpty(consumerSecret);
+            return OAuthValueIsMissing(consumerKey) || OAuthValueIsMissing(consumerSecret);
+        }
+
+        private static bool OAuthValueIsMissing(string value)
+        {
+            return string.IsNullOrEmpty(value) || value.Trim().Length == 0;
         }
 
         private static string GetFinalOAuthHeader(string HTTPRequestType, string URL, Dictionary<string, string> parameters)

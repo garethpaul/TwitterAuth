@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-13
+
+- Rejected whitespace-only OAuth credentials, request tokens, PINs, and access
+  token fields before signing, network exchange, or browser authorization.
+
 ## 2026-06-12
 
 - Replaced unanchored OAuth response regex extraction with exact-key form

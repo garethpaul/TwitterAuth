@@ -46,6 +46,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - OAuth access tokens are kept only for the active demo session. Startup
   removes values written to `PlayerPrefs` by older revisions, so users must
   authenticate again after restarting the app.
+- OAuth signing and browser authorization reject null, empty, and
+  whitespace-only credentials, request tokens, PINs, and access-token fields
+  through the existing redacted failure callbacks.
 - Run `make check` for static checks. The build step runs Unity only on hosts
   where `unity` is installed.
 
@@ -110,6 +113,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   API response error log redaction coverage.
 - See `docs/plans/2026-06-12-oauth-response-field-parsing.md` for exact-key,
   decoded, fail-closed OAuth response parsing.
+- See `docs/plans/2026-06-13-oauth-whitespace-input-guards.md` for
+  whitespace-only OAuth input rejection before side effects.
 
 ## Contributing
 

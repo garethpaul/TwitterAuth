@@ -17,6 +17,7 @@ CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 SESSION_ONLY_TOKEN_PLAN = DOCS_PLANS / "2026-06-10-session-only-oauth-tokens.md"
 PROVIDER_ERROR_LOG_PLAN = DOCS_PLANS / "2026-06-10-provider-error-log-redaction.md"
 OAUTH_RESPONSE_FIELD_PLAN = DOCS_PLANS / "2026-06-12-oauth-response-field-parsing.md"
+OAUTH_WHITESPACE_PLAN = DOCS_PLANS / "2026-06-13-oauth-whitespace-input-guards.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -214,7 +215,7 @@ def check_oauth_nonce_entropy():
 def check_authorization_url_token_safety():
     api = read_text("UnityTwitter/Assets/Twitter.cs")
     require(
-        "string.IsNullOrEmpty(requestToken)" in api,
+        "OAuthValueIsMissing(requestToken)" in api,
         "OpenAuthorizationPage must guard missing request-token values",
     )
     require(
@@ -251,7 +252,7 @@ def check_demo_access_flow_guards():
         "tweet submission guard must explain missing access-token state",
     )
     require(
-        "response == null" in api and "string.IsNullOrEmpty(response.Token)" in api,
+        "response == null" in api and "OAuthValueIsMissing(response.Token)" in api,
         "PostTweet must guard missing access-token response before OAuth signing",
     )
     require(
@@ -287,11 +288,11 @@ def check_access_token_exchange_guards():
 
     preamble = match.group("preamble")
     require(
-        "string.IsNullOrEmpty(requestToken)" in preamble,
+        "OAuthValueIsMissing(requestToken)" in preamble,
         "GetAccessToken must guard missing request-token values before signing",
     )
     require(
-        "string.IsNullOrEmpty(pin)" in preamble,
+        "OAuthValueIsMissing(pin)" in preamble,
         "GetAccessToken must guard missing PIN values before signing",
     )
     require(
@@ -336,7 +337,7 @@ def check_api_consumer_credential_guards():
 
     access_token_match = re.search(
         r"public static IEnumerator GetAccessToken\([^)]*\)\s*\{"
-        r"(?P<preamble>.*?)if \(string\.IsNullOrEmpty\(requestToken\)",
+        r"(?P<preamble>.*?)if \(OAuthValueIsMissing\(requestToken\)",
         api,
         re.DOTALL,
     )
@@ -374,6 +375,53 @@ def check_api_consumer_credential_guards():
     require(
         "callback(false);" in post_tweet_preamble and "yield break;" in post_tweet_preamble,
         "PostTweet credential guard must fail the callback and stop before signing",
+    )
+
+
+def check_oauth_whitespace_input_guards():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    helper = (
+        "private static bool OAuthValueIsMissing(string value)",
+        "string.IsNullOrEmpty(value) || value.Trim().Length == 0",
+    )
+    for contract in helper:
+        require(contract in api, f"OAuth whitespace guard is missing: {contract}")
+
+    guarded_values = (
+        "OAuthValueIsMissing(consumerKey)",
+        "OAuthValueIsMissing(consumerSecret)",
+        "OAuthValueIsMissing(requestToken)",
+        "OAuthValueIsMissing(pin)",
+        "OAuthValueIsMissing(response.Token)",
+        "OAuthValueIsMissing(response.TokenSecret)",
+        "OAuthValueIsMissing(response.UserId)",
+        "OAuthValueIsMissing(response.ScreenName)",
+    )
+    for contract in guarded_values:
+        require(contract in api, f"OAuth input must reject whitespace-only values: {contract}")
+
+    empty_only_guards = (
+        "string.IsNullOrEmpty(consumerKey)",
+        "string.IsNullOrEmpty(consumerSecret)",
+        "string.IsNullOrEmpty(requestToken)",
+        "string.IsNullOrEmpty(pin)",
+        "string.IsNullOrEmpty(response.Token)",
+        "string.IsNullOrEmpty(response.TokenSecret)",
+        "string.IsNullOrEmpty(response.UserId)",
+        "string.IsNullOrEmpty(response.ScreenName)",
+    )
+    for contract in empty_only_guards:
+        require(contract not in api, f"OAuth input must not use an empty-only guard: {contract}")
+
+    require(
+        api.index("if (OAuthValueIsMissing(requestToken))")
+        < api.index("Application.OpenURL(string.Format(AuthorizationURL"),
+        "request-token whitespace guard must precede browser authorization",
+    )
+    require(
+        api.index("if (OAuthValueIsMissing(requestToken) || OAuthValueIsMissing(pin))")
+        < api.index("WWW web = WWWAccessToken"),
+        "request-token and PIN whitespace guards must precede access-token exchange",
     )
 
 
@@ -442,6 +490,7 @@ def check_docs_plans():
         OAUTH_RESPONSE_FIELD_PLAN in plans,
         f"{OAUTH_RESPONSE_FIELD_PLAN.relative_to(ROOT)} must be present",
     )
+    require(OAUTH_WHITESPACE_PLAN in plans, f"{OAUTH_WHITESPACE_PLAN.relative_to(ROOT)} must be present")
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -465,6 +514,7 @@ def main():
         check_demo_access_flow_guards,
         check_access_token_exchange_guards,
         check_api_consumer_credential_guards,
+        check_oauth_whitespace_input_guards,
         check_ci_workflow,
         check_docs_plans,
     ]
