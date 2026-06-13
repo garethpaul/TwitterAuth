@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- Required every consumed OAuth token and identity response field to occur
+  exactly once, rejecting ambiguous duplicated fields through redacted paths.
+- Added exact-key duplicate fixtures for request tokens, token secrets, user
+  IDs, and screen names.
 - Rejected whitespace-only OAuth credentials, request tokens, PINs, and access
   token fields before signing, network exchange, or browser authorization.
 

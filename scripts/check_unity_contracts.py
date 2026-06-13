@@ -18,6 +18,7 @@ SESSION_ONLY_TOKEN_PLAN = DOCS_PLANS / "2026-06-10-session-only-oauth-tokens.md"
 PROVIDER_ERROR_LOG_PLAN = DOCS_PLANS / "2026-06-10-provider-error-log-redaction.md"
 OAUTH_RESPONSE_FIELD_PLAN = DOCS_PLANS / "2026-06-12-oauth-response-field-parsing.md"
 OAUTH_WHITESPACE_PLAN = DOCS_PLANS / "2026-06-13-oauth-whitespace-input-guards.md"
+OAUTH_FIELD_UNIQUENESS_PLAN = DOCS_PLANS / "2026-06-13-oauth-response-field-uniqueness.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -182,14 +183,33 @@ def check_oauth_response_field_parsing():
     ]:
         require(assignment in api, f"OAuth response parsing must include {assignment}")
     require(
-        'Regex.Match(form, @"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)")' in api,
-        "OAuth response parser must match exact form field names",
+        'MatchCollection matches = Regex.Matches(' in api,
+        "OAuth response parser must collect all exact-key matches",
     )
     require(
-        'Uri.UnescapeDataString(match.Groups[1].Value.Replace("+", " "))' in api,
+        '@"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)"' in api,
+        "OAuth response parser must match exact form field names",
+    )
+    require("if (matches.Count != 1)" in api, "OAuth response fields must occur exactly once")
+    require(
+        'Uri.UnescapeDataString(matches[0].Groups[1].Value.Replace("+", " "))' in api,
         "OAuth response parser must decode form values",
     )
     require("catch (UriFormatException)" in api, "malformed OAuth response escaping must fail closed")
+
+    duplicate_fixtures = {
+        "oauth_token": "oauth_token=first&other=value&oauth_token=second",
+        "oauth_token_secret": "oauth_token_secret=first&other=value&oauth_token_secret=second",
+        "user_id": "user_id=first&other=value&user_id=second",
+        "screen_name": "screen_name=first&other=value&screen_name=second",
+    }
+    require(
+        set(duplicate_fixtures) == {"oauth_token", "oauth_token_secret", "user_id", "screen_name"},
+        "duplicate OAuth response fixtures must cover every consumed field",
+    )
+    for field, fixture in duplicate_fixtures.items():
+        matches = re.findall(r"(?:^|&)" + re.escape(field) + r"=([^&]*)", fixture)
+        require(len(matches) == 2, f"duplicate fixture for {field} must remain ambiguous")
 
 
 def check_oauth_nonce_entropy():
@@ -491,6 +511,10 @@ def check_docs_plans():
         f"{OAUTH_RESPONSE_FIELD_PLAN.relative_to(ROOT)} must be present",
     )
     require(OAUTH_WHITESPACE_PLAN in plans, f"{OAUTH_WHITESPACE_PLAN.relative_to(ROOT)} must be present")
+    require(
+        OAUTH_FIELD_UNIQUENESS_PLAN in plans,
+        f"{OAUTH_FIELD_UNIQUENESS_PLAN.relative_to(ROOT)} must be present",
+    )
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")

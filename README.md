@@ -49,6 +49,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - OAuth signing and browser authorization reject null, empty, and
   whitespace-only credentials, request tokens, PINs, and access-token fields
   through the existing redacted failure callbacks.
+- OAuth response parsing requires each consumed token or identity field to
+  occur exactly once; missing or duplicated fields fail through the same
+  redacted callbacks.
 - Run `make check` for static checks. The build step runs Unity only on hosts
   where `unity` is installed.
 
@@ -58,8 +61,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   token-safety, token-log redaction, OAuth nonce entropy, access-token exchange
   input guard, API-level consumer credential guard, account-identifier log
   redaction, tweet-text validation log redaction, provider-error log redaction,
-  exact-key OAuth response parsing, session-only OAuth storage, OAuth-flow
-  guard, and completed-plan checks.
+  exact-key and unique OAuth response parsing, session-only OAuth storage,
+  OAuth-flow guard, and completed-plan checks.
 - GitHub Actions runs the same `make check` static baseline on pushes and pull
   requests using Ubuntu 24.04, read-only permissions, immutable action pins,
   disabled checkout credential persistence, and cancellation for superseded
@@ -115,6 +118,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   decoded, fail-closed OAuth response parsing.
 - See `docs/plans/2026-06-13-oauth-whitespace-input-guards.md` for
   whitespace-only OAuth input rejection before side effects.
+- See `docs/plans/2026-06-13-oauth-response-field-uniqueness.md` for
+  fail-closed duplicate OAuth response fields.
 
 ## Contributing
 

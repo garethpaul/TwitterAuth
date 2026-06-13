@@ -1,6 +1,6 @@
 # OAuth Response Field Uniqueness
 
-## Status: In Progress
+## Status: Completed
 
 ## Context
 
@@ -51,9 +51,12 @@ closed instead of selecting an attacker-influenced value by position.
 
 ## Verification
 
-- Focused OAuth parser contracts and full `make check`
-- External-directory and space-containing-path portable checks
-- Hostile mutations for first-match behavior, count relaxation, missing field
-  fixtures, exact-key anchoring, and plan completion
+- `python3 -B -c '...check_oauth_response_field_parsing()'` passed exact-key,
+  uniqueness, decoding, malformed-input, and four-field duplicate fixtures.
+- Full local, external-directory, and space-containing-path `make check` runs
+  passed all 17 contract groups; Unity remains unavailable on this host.
+- Seven hostile mutations covering first-match behavior, count relaxation,
+  indexed-match drift, exact-key anchoring, removed field fixtures, and stale
+  plan status were rejected.
 - Python syntax, workflow YAML, SVG XML, `git diff --check`, generated-artifact,
-  and focused secret review
+  and focused secret reviews are included in final validation.

@@ -38,6 +38,8 @@ Helpful reports include:
   credential store if tokens must survive process restarts.
 - OAuth credentials, request tokens, PINs, and access-token fields reject
   whitespace-only values before signing, provider requests, or browser launch.
+- OAuth token and account-identity response fields must occur exactly once;
+  duplicated or missing fields fail without logging response values.
 
 ## Service and API Notes
 

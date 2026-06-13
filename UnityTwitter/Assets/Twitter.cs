@@ -457,15 +457,18 @@ namespace Twitter
                 return string.Empty;
             }
 
-            Match match = Regex.Match(form, @"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)");
-            if (!match.Success)
+            MatchCollection matches = Regex.Matches(
+                form,
+                @"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)"
+            );
+            if (matches.Count != 1)
             {
                 return string.Empty;
             }
 
             try
             {
-                return Uri.UnescapeDataString(match.Groups[1].Value.Replace("+", " "));
+                return Uri.UnescapeDataString(matches[0].Groups[1].Value.Replace("+", " "));
             }
             catch (UriFormatException)
             {
