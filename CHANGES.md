@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Ignored superseded OAuth callbacks with per-stage generations, cleared prior
+  auth state on replacement attempts, and consumed request tokens once.
 - Required every consumed OAuth token and identity response field to occur
   exactly once, rejecting ambiguous duplicated fields through redacted paths.
 - Added exact-key duplicate fixtures for request tokens, token secrets, user

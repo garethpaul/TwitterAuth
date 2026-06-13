@@ -40,6 +40,8 @@ Helpful reports include:
   whitespace-only values before signing, provider requests, or browser launch.
 - OAuth token and account-identity response fields must occur exactly once;
   duplicated or missing fields fail without logging response values.
+- The demo ignores superseded OAuth callbacks, clears prior response state when
+  replacement attempts start, and consumes request tokens before exchange.
 
 ## Service and API Notes
 

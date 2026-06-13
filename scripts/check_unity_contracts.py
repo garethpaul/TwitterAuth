@@ -19,6 +19,7 @@ PROVIDER_ERROR_LOG_PLAN = DOCS_PLANS / "2026-06-10-provider-error-log-redaction.
 OAUTH_RESPONSE_FIELD_PLAN = DOCS_PLANS / "2026-06-12-oauth-response-field-parsing.md"
 OAUTH_WHITESPACE_PLAN = DOCS_PLANS / "2026-06-13-oauth-whitespace-input-guards.md"
 OAUTH_FIELD_UNIQUENESS_PLAN = DOCS_PLANS / "2026-06-13-oauth-response-field-uniqueness.md"
+STALE_OAUTH_CALLBACK_PLAN = DOCS_PLANS / "2026-06-13-stale-oauth-callback-guards.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -445,6 +446,74 @@ def check_oauth_whitespace_input_guards():
     )
 
 
+def check_stale_oauth_callback_guards():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    contracts = (
+        "private int m_RequestTokenGeneration;",
+        "private int m_AccessTokenGeneration;",
+        "int requestTokenGeneration = ++m_RequestTokenGeneration;",
+        "OnRequestTokenCallback(requestTokenGeneration, success, response)",
+        "int accessTokenGeneration = ++m_AccessTokenGeneration;",
+        "OnAccessTokenCallback(accessTokenGeneration, success, response)",
+        "if (requestTokenGeneration != m_RequestTokenGeneration)",
+        "if (accessTokenGeneration != m_AccessTokenGeneration)",
+        "string requestToken = m_RequestTokenResponse.Token;",
+        "if (success && response != null)",
+    )
+    for contract in contracts:
+        require(contract in demo, f"stale OAuth callback contract is missing: {contract}")
+
+    require(
+        demo.count("m_RequestTokenResponse = null;") >= 3,
+        "request-token state must clear on replacement, consumption, and failure",
+    )
+    require(
+        demo.count("m_AccessTokenResponse = new AccessTokenResponse();") >= 4,
+        "access-token state must clear on startup, replacement, exchange, and failure",
+    )
+    replacement_start = demo.index("if (GUI.Button(rect, text))")
+    request_launch = demo.index("API.GetRequestToken", replacement_start)
+    require(
+        replacement_start
+        < demo.index("m_RequestTokenResponse = null;", replacement_start)
+        < demo.index("m_AccessTokenResponse = new AccessTokenResponse();", replacement_start)
+        < demo.index("m_AccessTokenGeneration++;", replacement_start)
+        < demo.index("int requestTokenGeneration = ++m_RequestTokenGeneration;", replacement_start)
+        < request_launch,
+        "replacement auth state must clear and invalidate before request-token launch",
+    )
+    token_copy = demo.index("string requestToken = m_RequestTokenResponse.Token;")
+    access_launch = demo.index("API.GetAccessToken", token_copy)
+    require(
+        token_copy
+        < demo.index("m_RequestTokenResponse = null;", token_copy)
+        < demo.index("m_RequestTokenGeneration++;", token_copy)
+        < demo.index("m_AccessTokenResponse = new AccessTokenResponse();", token_copy)
+        < demo.index("int accessTokenGeneration = ++m_AccessTokenGeneration;", token_copy)
+        < access_launch,
+        "request tokens must be copied, consumed, and generation-bound before exchange",
+    )
+    require(
+        demo.index("if (requestTokenGeneration != m_RequestTokenGeneration)")
+        < demo.index("m_RequestTokenResponse = response;"),
+        "request-token callbacks must reject stale generations before state assignment",
+    )
+    require(
+        demo.index("if (accessTokenGeneration != m_AccessTokenGeneration)")
+        < demo.index("m_AccessTokenResponse = response;"),
+        "access-token callbacks must reject stale generations before state assignment",
+    )
+
+    documentation = {
+        "README.md": "OAuth callback generations",
+        "SECURITY.md": "superseded OAuth callbacks",
+        "VISION.md": "Ignore superseded OAuth callbacks",
+        "CHANGES.md": "Ignored superseded OAuth callbacks",
+    }
+    for relative_path, phrase in documentation.items():
+        require(phrase in read_text(relative_path), f"{relative_path} must document stale OAuth callback guards")
+
+
 def check_ci_workflow():
     workflow = read_text(".github/workflows/check.yml")
     checkout_action = "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"
@@ -515,6 +584,10 @@ def check_docs_plans():
         OAUTH_FIELD_UNIQUENESS_PLAN in plans,
         f"{OAUTH_FIELD_UNIQUENESS_PLAN.relative_to(ROOT)} must be present",
     )
+    require(
+        STALE_OAUTH_CALLBACK_PLAN in plans,
+        f"{STALE_OAUTH_CALLBACK_PLAN.relative_to(ROOT)} must be present",
+    )
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -539,6 +612,7 @@ def main():
         check_access_token_exchange_guards,
         check_api_consumer_credential_guards,
         check_oauth_whitespace_input_guards,
+        check_stale_oauth_callback_guards,
         check_ci_workflow,
         check_docs_plans,
     ]

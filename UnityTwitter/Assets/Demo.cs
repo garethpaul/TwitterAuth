@@ -34,8 +34,10 @@ public class Demo : MonoBehaviour
     public float USER_LOG_IN_Y;
 
     private AccessTokenResponse m_AccessTokenResponse;
+    private int m_AccessTokenGeneration;
 
     private string m_PIN = "Please enter your PIN here.";
+    private int m_RequestTokenGeneration;
     private RequestTokenResponse m_RequestTokenResponse;
     private string m_Tweet = "Please enter your tweet here.";
 
@@ -84,8 +86,12 @@ public class Demo : MonoBehaviour
 
             if (GUI.Button(rect, text))
             {
+                m_RequestTokenResponse = null;
+                m_AccessTokenResponse = new AccessTokenResponse();
+                m_AccessTokenGeneration++;
+                int requestTokenGeneration = ++m_RequestTokenGeneration;
                 StartCoroutine(API.GetRequestToken(CONSUMER_KEY, CONSUMER_SECRET,
-                    OnRequestTokenCallback));
+                    (success, response) => OnRequestTokenCallback(requestTokenGeneration, success, response)));
             }
         }
 
@@ -107,8 +113,13 @@ public class Demo : MonoBehaviour
         {
             if (m_RequestTokenResponse != null && !string.IsNullOrEmpty(m_RequestTokenResponse.Token))
             {
-                StartCoroutine(API.GetAccessToken(CONSUMER_KEY, CONSUMER_SECRET, m_RequestTokenResponse.Token, m_PIN,
-                    OnAccessTokenCallback));
+                string requestToken = m_RequestTokenResponse.Token;
+                m_RequestTokenResponse = null;
+                m_RequestTokenGeneration++;
+                m_AccessTokenResponse = new AccessTokenResponse();
+                int accessTokenGeneration = ++m_AccessTokenGeneration;
+                StartCoroutine(API.GetAccessToken(CONSUMER_KEY, CONSUMER_SECRET, requestToken, m_PIN,
+                    (success, response) => OnAccessTokenCallback(accessTokenGeneration, success, response)));
             }
             else
             {
@@ -155,9 +166,14 @@ public class Demo : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    private void OnRequestTokenCallback(bool success, RequestTokenResponse response)
+    private void OnRequestTokenCallback(int requestTokenGeneration, bool success, RequestTokenResponse response)
     {
-        if (success)
+        if (requestTokenGeneration != m_RequestTokenGeneration)
+        {
+            return;
+        }
+
+        if (success && response != null)
         {
             string log = "OnRequestTokenCallback - succeeded";
             log += "\n    Token : <redacted>";
@@ -170,13 +186,19 @@ public class Demo : MonoBehaviour
         }
         else
         {
+            m_RequestTokenResponse = null;
             print("OnRequestTokenCallback - failed.");
         }
     }
 
-    private void OnAccessTokenCallback(bool success, AccessTokenResponse response)
+    private void OnAccessTokenCallback(int accessTokenGeneration, bool success, AccessTokenResponse response)
     {
-        if (success)
+        if (accessTokenGeneration != m_AccessTokenGeneration)
+        {
+            return;
+        }
+
+        if (success && response != null)
         {
             string log = "OnAccessTokenCallback - succeeded";
             log += "\n    UserId : <redacted>";
@@ -189,6 +211,7 @@ public class Demo : MonoBehaviour
         }
         else
         {
+            m_AccessTokenResponse = new AccessTokenResponse();
             print("OnAccessTokenCallback - failed.");
         }
     }

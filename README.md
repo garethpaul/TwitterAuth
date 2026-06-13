@@ -52,6 +52,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - OAuth response parsing requires each consumed token or identity field to
   occur exactly once; missing or duplicated fields fail through the same
   redacted callbacks.
+- OAuth callback generations ignore superseded request/access token results,
+  clear replacement state, and consume request tokens before exchange.
 - Run `make check` for static checks. The build step runs Unity only on hosts
   where `unity` is installed.
 
@@ -120,6 +122,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   whitespace-only OAuth input rejection before side effects.
 - See `docs/plans/2026-06-13-oauth-response-field-uniqueness.md` for
   fail-closed duplicate OAuth response fields.
+- See `docs/plans/2026-06-13-stale-oauth-callback-guards.md` for auth attempt
+  generations and one-time request-token consumption.
 
 ## Contributing
 

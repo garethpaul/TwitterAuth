@@ -6,7 +6,7 @@ date: 2026-06-13
 
 # Ignore Stale OAuth Callbacks
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -60,16 +60,29 @@ credentials from a superseded authorization flow.
 
 ## Verification
 
-- Run the focused stale-callback contract before the full local and
-  external-working-directory `make check` gates under explicit timeouts.
-- Reject hostile mutations for missing generation capture, stale callback
-  acceptance, missing state resets, request-token reuse, ordering drift,
-  documentation removal, and stale plan status.
-- Validate Python syntax, workflow YAML, Unity project metadata, intended
-  paths, generated artifacts, whitespace, conflict markers, and changed-line
-  secret patterns.
-- Report Unity editor and coroutine runtime execution as unavailable on this
-  host; do not claim provider or browser behavior that was not exercised.
+- The focused stale-callback contract passed after implementation.
+- The pre-completion repository gate passed all 18 non-plan contract groups.
+- Sixteen hostile mutations covering missing generation capture, stale
+  callback acceptance, retained replacement/failure state, request-token
+  reuse, documentation drift, and stale plan status were rejected.
+- Python checker syntax validation passed.
+- Final local and external-working-directory `make check` runs are executed
+  after this completed-plan record is written so the canonical plan contract
+  validates the same state that is shipped.
+- `make build` truthfully skipped Unity editor compilation because `unity` is
+  unavailable on this host; no coroutine, browser, or provider behavior is
+  claimed.
+
+## Work Completed
+
+- Added separate request-token and access-token generations and captured each
+  generation in the corresponding coroutine callback.
+- Cleared prior auth state before replacement attempts, invalidated the other
+  stage where required, and ignored superseded callbacks before assignment.
+- Copied and cleared request-token state before access-token exchange so a PIN
+  action cannot reuse the same request token.
+- Cleared current-generation failure state while preserving existing redacted
+  messages and success behavior.
 
 ## Scope Boundaries
 
