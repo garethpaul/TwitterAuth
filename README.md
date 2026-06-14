@@ -30,6 +30,21 @@ Additional scan context:
 ### Prerequisites
 
 - Git
+- A compatible legacy Unity editor. The repository does not contain
+  `ProjectVersion.txt`, so no exact Unity release is claimed.
+
+### Legacy Unity And API Boundary
+
+- Open the checked-in `UnityTwitter` project and inspect the `Demo` scene.
+- Historically, the consumer key and consumer secret were entered locally on
+  the Demo object in the Unity Inspector. Never commit those values.
+- Access tokens remain session-only, so restarting the demo requires a new
+  authorization flow.
+- The sample uses PIN-based OAuth, explicit user-triggered status posting,
+  Unity's legacy `WWW` transport, and checked-in HTTPS Twitter endpoints.
+- Twitter app registration, PIN authorization, API access, posting, and Unity
+  runtime behavior are retired or unverified. Static contracts do not prove
+  that the historical service flow still works.
 
 ### Setup
 
@@ -124,6 +139,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   fail-closed duplicate OAuth response fields.
 - See `docs/plans/2026-06-13-stale-oauth-callback-guards.md` for auth attempt
   generations and one-time request-token consumption.
+- See `docs/plans/2026-06-14-legacy-unity-setup-notes.md` for the historical
+  Unity, credential, OAuth, transport, and retired Twitter API boundary.
 
 ## Contributing
 

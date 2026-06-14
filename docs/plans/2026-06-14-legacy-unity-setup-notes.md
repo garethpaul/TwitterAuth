@@ -1,6 +1,6 @@
 # Legacy Unity And Twitter API Setup Notes
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -31,11 +31,13 @@ inventing a supported Unity version.
 
 ## Verification
 
-- focused static setup-note and source contracts
-- repository and external-directory `make check`
-- hostile Unity-version claim, credential configuration, token persistence,
-  endpoint, transport, documentation, suite, roadmap, and plan-status mutations
-- final artifact, credential, exact-diff, and hosted static-check audits
+- Focused static setup-note and source contracts passed.
+- The repository and external-directory `make check` passed.
+- Eight hostile legacy-Unity setup mutations were rejected across Unity-version
+  claims, credential configuration, token persistence, transport,
+  documentation, suite, roadmap, and plan-status contracts.
+- Final artifact, credential, exact-diff, and hosted static-check audits remain
+  the shipping gate.
 
 ## Scope Boundary
 

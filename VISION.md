@@ -37,10 +37,11 @@ Priority:
 - Keep runtime network endpoints on HTTPS
 - Keep demo logs redacted when OAuth succeeds
 - Keep the static `make check` baseline running in GitHub Actions
+- Keep legacy Unity setup, local credential, PIN OAuth, explicit posting,
+  `WWW`, HTTPS endpoint, and retired API notes tied to checked-in evidence
 
 Next priorities:
 
-- Add README setup notes for Unity and API credential configuration
 - Document platform credential-store integration if persistent login is revived
 - Add a no-post demo path for authentication-only testing
 

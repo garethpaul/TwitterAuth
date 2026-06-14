@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-14
+
+- Documented the unpinned legacy Unity editor boundary, local-only Demo
+  credentials, session-only tokens, PIN OAuth, explicit posting, legacy `WWW`
+  transport, HTTPS endpoints, and retired Twitter API limitations.
+
 ## 2026-06-13
 
 - Ignored superseded OAuth callbacks with per-stage generations, cleared prior

@@ -21,6 +21,7 @@ OAUTH_WHITESPACE_PLAN = DOCS_PLANS / "2026-06-13-oauth-whitespace-input-guards.m
 OAUTH_FIELD_UNIQUENESS_PLAN = DOCS_PLANS / "2026-06-13-oauth-response-field-uniqueness.md"
 STALE_OAUTH_CALLBACK_PLAN = DOCS_PLANS / "2026-06-13-stale-oauth-callback-guards.md"
 MAKE_ROOT_PROTECTION_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
+LEGACY_UNITY_SETUP_PLAN = DOCS_PLANS / "2026-06-14-legacy-unity-setup-notes.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -90,6 +91,40 @@ def check_runtime_urls_are_https():
 
     demo = read_text("UnityTwitter/Assets/Demo.cs")
     require("https://dev.twitter.com/apps/new" in demo, "registration URL must use HTTPS")
+
+
+def check_legacy_unity_setup_notes():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    readme = read_text("README.md")
+
+    require(
+        not (ROOT / "UnityTwitter/ProjectSettings/ProjectVersion.txt").exists(),
+        "an exact Unity version must not be claimed without reviewing a newly added ProjectVersion.txt",
+    )
+    require("public string CONSUMER_KEY;" in demo, "Demo must expose the local consumer key field")
+    require("public string CONSUMER_SECRET;" in demo, "Demo must expose the local consumer secret field")
+    require("WWW" in api, "historical setup notes must remain grounded in the legacy WWW transport")
+    for phrase in [
+        "`ProjectVersion.txt`",
+        "Legacy Unity And API Boundary",
+        "entered locally",
+        "Access tokens remain session-only",
+        "PIN-based OAuth",
+        "explicit user-triggered status posting",
+        "legacy `WWW` transport",
+        "retired or unverified",
+        "docs/plans/2026-06-14-legacy-unity-setup-notes.md",
+    ]:
+        require(phrase in readme, f"README.md must document {phrase}")
+    require(
+        "Keep legacy Unity setup, local credential, PIN OAuth" in read_text("VISION.md"),
+        "VISION.md must preserve the legacy setup boundary",
+    )
+    require(
+        "unpinned legacy Unity editor boundary" in read_text("CHANGES.md"),
+        "CHANGES.md must record the legacy setup boundary",
+    )
 
 
 def check_bug_note_status():
@@ -595,6 +630,10 @@ def check_docs_plans():
         MAKE_ROOT_PROTECTION_PLAN in plans,
         f"{MAKE_ROOT_PROTECTION_PLAN.relative_to(ROOT)} must be present",
     )
+    require(
+        LEGACY_UNITY_SETUP_PLAN in plans,
+        f"{LEGACY_UNITY_SETUP_PLAN.relative_to(ROOT)} must be present",
+    )
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -606,6 +645,7 @@ def main():
     checks = [
         check_required_project_files,
         check_runtime_urls_are_https,
+        check_legacy_unity_setup_notes,
         check_bug_note_status,
         check_demo_token_logging,
         check_demo_account_identifier_logging,
