@@ -20,6 +20,7 @@ OAUTH_RESPONSE_FIELD_PLAN = DOCS_PLANS / "2026-06-12-oauth-response-field-parsin
 OAUTH_WHITESPACE_PLAN = DOCS_PLANS / "2026-06-13-oauth-whitespace-input-guards.md"
 OAUTH_FIELD_UNIQUENESS_PLAN = DOCS_PLANS / "2026-06-13-oauth-response-field-uniqueness.md"
 STALE_OAUTH_CALLBACK_PLAN = DOCS_PLANS / "2026-06-13-stale-oauth-callback-guards.md"
+MAKE_ROOT_PROTECTION_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -546,10 +547,12 @@ def check_ci_workflow():
     )
 
     makefile = read_text("Makefile")
+    makefile_lines = set(makefile.splitlines())
     require(
-        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile,
-        "Makefile must resolve commands from the repository root",
+        "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile_lines,
+        "Makefile must protect commands rooted at the repository",
     )
+    require("PYTHON ?= python3" in makefile_lines, "Makefile must preserve the Python command override")
     require('"$(ROOT)/scripts/check_unity_contracts.py"' in makefile, "Makefile must use the rooted checker path")
     require('"$(ROOT)/UnityTwitter"' in makefile, "Makefile must use the rooted Unity project path")
 
@@ -587,6 +590,10 @@ def check_docs_plans():
     require(
         STALE_OAUTH_CALLBACK_PLAN in plans,
         f"{STALE_OAUTH_CALLBACK_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        MAKE_ROOT_PROTECTION_PLAN in plans,
+        f"{MAKE_ROOT_PROTECTION_PLAN.relative_to(ROOT)} must be present",
     )
 
     for plan in plans:

@@ -5,7 +5,7 @@ date: 2026-06-14
 
 # Protect the Make Repository Root from Overrides
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -47,3 +47,19 @@ the reviewed checkout.
 - Do not alter OAuth flow, Unity source, dependencies, workflows, or runtime
   behavior.
 - Do not merge or close any stacked pull request without owner authorization.
+
+## Work Completed
+
+- Protected the Makefile-derived root while preserving the Python override.
+- Added exact-line checker contracts and registered this completed plan.
+
+## Verification
+
+- Python compilation and the focused CI/Makefile contract passed.
+- Local, external-directory, and hostile-root `make check` runs passed under
+  240-second timeouts with all 18 contract groups; Unity correctly remained
+  unavailable on Linux.
+- Eight hostile root, checker, Python override, and plan-status mutations were
+  rejected.
+- Python syntax, workflow YAML, Unity XML, SVG XML, intended-path, artifact,
+  `git diff --check`, and changed-line secret audits passed before shipment.
