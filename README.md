@@ -66,6 +66,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - OAuth signing and browser authorization reject null, empty, and
   whitespace-only credentials, request tokens, PINs, and access-token fields
   through the existing redacted failure callbacks.
+- Tweet text rejects null, empty, whitespace-only, and over-limit values before
+  OAuth signing or network construction while preserving valid text exactly.
 - OAuth response parsing requires each consumed token or identity field to
   occur exactly once; missing or duplicated fields fail through the same
   redacted callbacks.
@@ -145,6 +147,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   Unity, credential, OAuth, transport, and retired Twitter API boundary.
 - See `docs/plans/2026-06-16-invariant-oauth-timestamp.md` for the
   locale-independent OAuth timestamp signing boundary.
+- See `docs/plans/2026-06-16-whitespace-tweet-preflight.md` for the completed
+  tweet text preflight and valid-content preservation boundary.
 
 ## Contributing
 

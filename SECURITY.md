@@ -38,6 +38,8 @@ Helpful reports include:
   credential store if tokens must survive process restarts.
 - OAuth credentials, request tokens, PINs, and access-token fields reject
   whitespace-only values before signing, provider requests, or browser launch.
+- Tweet text rejects null, empty, whitespace-only, and over-limit values before
+  OAuth signing or network construction without rewriting valid content.
 - OAuth token and account-identity response fields must occur exactly once;
   duplicated or missing fields fail without logging response values.
 - The demo ignores superseded OAuth callbacks, clears prior response state when

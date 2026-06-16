@@ -4,6 +4,8 @@
 
 - Made OAuth timestamp conversion and decimal formatting culture-independent
   so signatures use stable Unix-second protocol values on every host locale.
+- Rejected whitespace-only tweet text before OAuth signing and request
+  construction while preserving valid content exactly.
 
 ## 2026-06-14
 

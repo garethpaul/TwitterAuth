@@ -1,6 +1,6 @@
 # Reject Whitespace-Only Tweets Before OAuth Signing
 
-Status: Planned
+Status: Completed
 
 ## Context
 
@@ -47,3 +47,29 @@ cannot produce useful user content.
 Unity editor execution and live Twitter OAuth are unavailable. This change is
 verified through the repository's deterministic source contracts and hosted
 portable Python matrix; no live posting claim is made.
+
+## Work Completed
+
+- Added a centralized tweet-text preflight that rejects null, empty,
+  whitespace-only, and over-limit values before request construction.
+- Preserved valid tweet text exactly in the OAuth parameters and form body.
+- Added a registered static contract for helper semantics, validation order,
+  early failure, redacted diagnostics, content preservation, guidance, and
+  completed-plan evidence.
+- Updated maintained posting, security, roadmap, and change documentation.
+
+## Verification Completed
+
+- `python3 -m py_compile scripts/check_unity_contracts.py`
+- Focused `check_tweet_text_preflight` execution.
+- All 20 implementation and repository contracts excluding the deliberate
+  in-progress plan-status gate before this completion record was written.
+- The first `make check` attempt rejected this plan because it described the
+  gate without recording the literal command; this evidence entry corrects
+  that documentation-contract failure before the canonical rerun.
+- Repository-root and external-directory `make check` reruns passed all 21
+  static contracts; Unity was unavailable and the documented build step
+  skipped editor execution.
+- Eight isolated mutations were rejected for whitespace-check removal, helper
+  bypass, valid-text trimming, diagnostic weakening, README/security/vision
+  guidance removal, and focused-check unregistration.

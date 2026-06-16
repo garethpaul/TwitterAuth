@@ -19,6 +19,7 @@ Priority:
 - Guard API-level OAuth helpers before signing requests with missing consumer
   credentials
 - Reject whitespace-only OAuth inputs before signing or browser authorization
+- Reject whitespace-only tweet text before OAuth signing or network requests
 - Avoid logging access tokens and token secrets
 - Keep demo OAuth tokens session-only and remove legacy plaintext PlayerPrefs
   values

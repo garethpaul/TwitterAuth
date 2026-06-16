@@ -218,46 +218,45 @@ namespace Twitter
                 yield break;
             }
 
-            if (string.IsNullOrEmpty(text) || text.Length > 140)
+            if (TweetTextIsInvalid(text))
             {
-                Debug.Log("PostTweet - text is empty or too long.");
+                Debug.Log("PostTweet - text is empty, whitespace-only, or too long.");
 
+                callback(false);
+                yield break;
+            }
+
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("status", text);
+
+            // Add data to the form to post.
+            WWWForm form = new WWWForm();
+            form.AddField("status", text);
+
+            // HTTP header
+            var headers = new Hashtable();
+            headers["Authorization"] = GetHeaderWithAccessToken("POST", PostTweetURL, consumerKey, consumerSecret, response, parameters);
+
+            WWW web = new WWW(PostTweetURL, form.data, headers);
+            yield return web;
+
+            if (!string.IsNullOrEmpty(web.error))
+            {
+                Debug.Log("PostTweet - request failed.");
                 callback(false);
             }
             else
             {
-                Dictionary<string, string> parameters = new Dictionary<string, string>();
-                parameters.Add("status", text);
-                
-                // Add data to the form to post.
-                WWWForm form = new WWWForm();
-                form.AddField("status", text);
-                
-                // HTTP header
-                var headers = new Hashtable();
-                headers["Authorization"] = GetHeaderWithAccessToken("POST", PostTweetURL, consumerKey, consumerSecret, response, parameters);
+                string error = Regex.Match(web.text, @"<error>([^&]+)</error>").Groups[1].Value;
 
-                WWW web = new WWW(PostTweetURL, form.data, headers);
-                yield return web;
-
-                if (!string.IsNullOrEmpty(web.error))
+                if (!string.IsNullOrEmpty(error))
                 {
-                    Debug.Log("PostTweet - request failed.");
+                    Debug.Log("PostTweet - response reported an error.");
                     callback(false);
                 }
                 else
                 {
-                    string error = Regex.Match(web.text, @"<error>([^&]+)</error>").Groups[1].Value;
-
-                    if (!string.IsNullOrEmpty(error))
-                    {
-                        Debug.Log("PostTweet - response reported an error.");
-                        callback(false);
-                    }
-                    else
-                    {
-                       callback(true);
-                    }
+                   callback(true);
                 }
             }
         }
@@ -340,6 +339,11 @@ namespace Twitter
         private static bool OAuthValueIsMissing(string value)
         {
             return string.IsNullOrEmpty(value) || value.Trim().Length == 0;
+        }
+
+        private static bool TweetTextIsInvalid(string text)
+        {
+            return string.IsNullOrEmpty(text) || text.Trim().Length == 0 || text.Length > 140;
         }
 
         private static string GetFinalOAuthHeader(string HTTPRequestType, string URL, Dictionary<string, string> parameters)

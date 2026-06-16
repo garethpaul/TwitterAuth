@@ -24,6 +24,7 @@ STALE_OAUTH_CALLBACK_PLAN = DOCS_PLANS / "2026-06-13-stale-oauth-callback-guards
 MAKE_ROOT_PROTECTION_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
 LEGACY_UNITY_SETUP_PLAN = DOCS_PLANS / "2026-06-14-legacy-unity-setup-notes.md"
 INVARIANT_OAUTH_TIMESTAMP_PLAN = DOCS_PLANS / "2026-06-16-invariant-oauth-timestamp.md"
+WHITESPACE_TWEET_PLAN = DOCS_PLANS / "2026-06-16-whitespace-tweet-preflight.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -365,8 +366,75 @@ def check_demo_access_flow_guards():
         "PostTweet validation failures must not log tweet text",
     )
     require(
-        "PostTweet - text is empty or too long." in api,
+        "PostTweet - text is empty, whitespace-only, or too long." in api,
         "PostTweet validation failures must use a redacted text validation message",
+    )
+
+
+def check_tweet_text_preflight():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    readme = read_text("README.md")
+    security = read_text("SECURITY.md")
+    vision = read_text("VISION.md")
+
+    require(
+        "private static bool TweetTextIsInvalid(string text)" in api,
+        "tweet text validation must remain centralized",
+    )
+    require(
+        "return string.IsNullOrEmpty(text) || text.Trim().Length == 0 || text.Length > 140;" in api,
+        "tweet text validation must reject empty, whitespace-only, and over-limit values",
+    )
+
+    match = re.search(
+        r"public static IEnumerator PostTweet\([^)]*\)\s*\{(?P<body>.*?)\n        \}\n\n        #endregion",
+        api,
+        re.DOTALL,
+    )
+    require(match, "PostTweet must remain available for static preflight verification")
+    body = match.group("body")
+
+    ordered_fragments = [
+        "ConsumerCredentialsAreMissing(consumerKey, consumerSecret)",
+        "OAuthValueIsMissing(response.Token)",
+        "TweetTextIsInvalid(text)",
+        'parameters.Add("status", text)',
+        'form.AddField("status", text)',
+        'headers["Authorization"]',
+        "new WWW(PostTweetURL, form.data, headers)",
+    ]
+    positions = [body.find(fragment) for fragment in ordered_fragments]
+    require(
+        all(position >= 0 for position in positions) and positions == sorted(positions),
+        "PostTweet must validate credentials, tokens, and text before request construction",
+    )
+
+    text_guard = body[positions[2] : positions[3]]
+    require(
+        "callback(false);" in text_guard and "yield break;" in text_guard,
+        "invalid tweet text must fail once and stop before request construction",
+    )
+    require(
+        "PostTweet - text is empty, whitespace-only, or too long." in text_guard,
+        "invalid tweet text must use a redacted diagnostic",
+    )
+    require(
+        "text = text.Trim()" not in body
+        and 'parameters.Add("status", text.Trim())' not in body
+        and 'form.AddField("status", text.Trim())' not in body,
+        "valid tweet text must be preserved exactly",
+    )
+    require(
+        "Tweet text rejects null, empty, whitespace-only, and over-limit values" in readme,
+        "README.md must document tweet text preflight validation",
+    )
+    require(
+        "Tweet text rejects null, empty, whitespace-only, and over-limit values" in security,
+        "SECURITY.md must document tweet text preflight validation",
+    )
+    require(
+        "Reject whitespace-only tweet text before OAuth signing or network requests" in vision,
+        "VISION.md must retain the whitespace-only tweet preflight priority",
     )
 
 
@@ -693,8 +761,16 @@ def check_docs_plans():
         f"{INVARIANT_OAUTH_TIMESTAMP_PLAN.relative_to(ROOT)} must be present",
     )
     require(
+        WHITESPACE_TWEET_PLAN in plans,
+        f"{WHITESPACE_TWEET_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
         "check_oauth_timestamp_culture" in registered_checks,
         "OAuth timestamp culture contract must remain registered",
+    )
+    require(
+        "check_tweet_text_preflight" in registered_checks,
+        "tweet text preflight contract must remain registered",
     )
 
     for plan in plans:
@@ -719,6 +795,7 @@ def main():
         check_oauth_timestamp_culture,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
+        check_tweet_text_preflight,
         check_access_token_exchange_guards,
         check_api_consumer_credential_guards,
         check_oauth_whitespace_input_guards,
