@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-16
+
+- Made OAuth timestamp conversion and decimal formatting culture-independent
+  so signatures use stable Unix-second protocol values on every host locale.
+
 ## 2026-06-14
 
 - Documented the unpinned legacy Unity editor boundary, local-only Demo

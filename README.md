@@ -42,6 +42,8 @@ Additional scan context:
   authorization flow.
 - The sample uses PIN-based OAuth, explicit user-triggered status posting,
   Unity's legacy `WWW` transport, and checked-in HTTPS Twitter endpoints.
+- OAuth timestamp values use invariant-culture Unix-second formatting so
+  request signatures do not vary with the host locale.
 - Twitter app registration, PIN authorization, API access, posting, and Unity
   runtime behavior are retired or unverified. Static contracts do not prove
   that the historical service flow still works.
@@ -141,6 +143,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   generations and one-time request-token consumption.
 - See `docs/plans/2026-06-14-legacy-unity-setup-notes.md` for the historical
   Unity, credential, OAuth, transport, and retired Twitter API boundary.
+- See `docs/plans/2026-06-16-invariant-oauth-timestamp.md` for the
+  locale-independent OAuth timestamp signing boundary.
 
 ## Contributing
 

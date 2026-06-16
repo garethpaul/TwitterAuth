@@ -2,6 +2,7 @@
 """Static verification for the legacy Unity TwitterAuth sample."""
 
 from pathlib import Path
+import ast
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -22,6 +23,7 @@ OAUTH_FIELD_UNIQUENESS_PLAN = DOCS_PLANS / "2026-06-13-oauth-response-field-uniq
 STALE_OAUTH_CALLBACK_PLAN = DOCS_PLANS / "2026-06-13-stale-oauth-callback-guards.md"
 MAKE_ROOT_PROTECTION_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
 LEGACY_UNITY_SETUP_PLAN = DOCS_PLANS / "2026-06-14-legacy-unity-setup-notes.md"
+INVARIANT_OAUTH_TIMESTAMP_PLAN = DOCS_PLANS / "2026-06-16-invariant-oauth-timestamp.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -266,6 +268,44 @@ def check_oauth_nonce_entropy():
     require(
         'BitConverter.ToString(nonceBytes).Replace("-", string.Empty)' in api,
         "OAuth nonce generation must format random bytes without separators",
+    )
+
+
+def check_oauth_timestamp_culture():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    readme = read_text("README.md")
+    security = read_text("SECURITY.md")
+    vision = read_text("VISION.md")
+    match = re.search(
+        r"private static string GenerateTimeStamp\(\)\s*\{(?P<body>.*?)\n\s*\}",
+        api,
+        re.DOTALL,
+    )
+    require(match is not None, "OAuth timestamp helper must remain present")
+    body = match.group("body")
+    require(
+        "Convert.ToInt64(ts.TotalSeconds, CultureInfo.InvariantCulture)" in body,
+        "OAuth timestamp conversion must use invariant culture",
+    )
+    require(
+        ".ToString(CultureInfo.InvariantCulture)" in body,
+        "OAuth timestamp formatting must use invariant culture",
+    )
+    require(
+        "CultureInfo.CurrentCulture" not in body,
+        "OAuth timestamps must not depend on the process current culture",
+    )
+    require(
+        "OAuth timestamp values use invariant-culture Unix-second formatting" in readme,
+        "README.md must document invariant OAuth timestamp formatting",
+    )
+    require(
+        "OAuth timestamps are formatted as invariant-culture Unix seconds" in security,
+        "SECURITY.md must document invariant OAuth timestamp formatting",
+    )
+    require(
+        "Format OAuth timestamps independently of the host locale" in vision,
+        "VISION.md must retain the invariant OAuth timestamp priority",
     )
 
 
@@ -603,6 +643,20 @@ def check_ci_workflow():
 
 
 def check_docs_plans():
+    checker = Path(__file__).read_text(encoding="utf-8")
+    checker_tree = ast.parse(checker)
+    registered_checks = set()
+    for node in checker_tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == "main":
+            for statement in node.body:
+                if (
+                    isinstance(statement, ast.Assign)
+                    and any(isinstance(target, ast.Name) and target.id == "checks" for target in statement.targets)
+                    and isinstance(statement.value, ast.List)
+                ):
+                    registered_checks = {
+                        element.id for element in statement.value.elts if isinstance(element, ast.Name)
+                    }
     require(DOCS_PLANS.is_dir(), "docs/plans must exist")
     plans = sorted(DOCS_PLANS.glob("*.md"))
     require(plans, "docs/plans must contain completed maintenance plans")
@@ -634,6 +688,14 @@ def check_docs_plans():
         LEGACY_UNITY_SETUP_PLAN in plans,
         f"{LEGACY_UNITY_SETUP_PLAN.relative_to(ROOT)} must be present",
     )
+    require(
+        INVARIANT_OAUTH_TIMESTAMP_PLAN in plans,
+        f"{INVARIANT_OAUTH_TIMESTAMP_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        "check_oauth_timestamp_culture" in registered_checks,
+        "OAuth timestamp culture contract must remain registered",
+    )
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -654,6 +716,7 @@ def main():
         check_api_provider_error_log_redaction,
         check_oauth_response_field_parsing,
         check_oauth_nonce_entropy,
+        check_oauth_timestamp_culture,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
         check_access_token_exchange_guards,

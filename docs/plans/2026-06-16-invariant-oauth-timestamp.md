@@ -1,6 +1,6 @@
 # Invariant OAuth Timestamp
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -49,8 +49,10 @@ the OAuth wire contract.
 
 ## Verification
 
-- Pending implementation.
-- Run focused timestamp contracts and full repository and external-directory
-  `make check` gates.
-- Run isolated hostile mutations for source, checker registration, guidance,
-  and completed-plan evidence.
+- `check_oauth_timestamp_culture` verifies invariant conversion and formatting
+  and rejects `CurrentCulture` inside `GenerateTimeStamp`.
+- Full repository and external-directory `make check` gates passed all static
+  contracts; Unity remains unavailable on this host.
+- Isolated hostile mutations for conversion culture, formatting culture,
+  checker registration, README guidance, and completed-plan evidence were
+  rejected.

@@ -42,6 +42,8 @@ Helpful reports include:
   duplicated or missing fields fail without logging response values.
 - The demo ignores superseded OAuth callbacks, clears prior response state when
   replacement attempts start, and consumes request tokens before exchange.
+- OAuth timestamps are formatted as invariant-culture Unix seconds so signed
+  protocol values do not depend on the device or editor locale.
 
 ## Service and API Notes
 
