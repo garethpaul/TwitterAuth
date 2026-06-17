@@ -7,6 +7,8 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
+from oauth_callback_preflight_contract import validation_errors as callback_preflight_errors
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS_PLANS = ROOT / "docs/plans"
@@ -25,6 +27,7 @@ MAKE_ROOT_PROTECTION_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protecti
 LEGACY_UNITY_SETUP_PLAN = DOCS_PLANS / "2026-06-14-legacy-unity-setup-notes.md"
 INVARIANT_OAUTH_TIMESTAMP_PLAN = DOCS_PLANS / "2026-06-16-invariant-oauth-timestamp.md"
 WHITESPACE_TWEET_PLAN = DOCS_PLANS / "2026-06-16-whitespace-tweet-preflight.md"
+CALLBACK_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-17-oauth-callback-preflight.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -471,6 +474,23 @@ def check_access_token_exchange_guards():
     )
 
 
+def check_oauth_callback_preflight():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    errors = callback_preflight_errors(api)
+    require(not errors, "; ".join(errors))
+
+    contract = (
+        "Public OAuth and posting coroutines reject missing callbacks before "
+        "credentials, signing, or network work."
+    )
+    for relative_path in ("README.md", "SECURITY.md", "VISION.md", "CHANGES.md"):
+        documented_contracts = re.sub(r"\s+", " ", read_text(relative_path))
+        require(
+            contract in documented_contracts,
+            f"{relative_path} must document the callback preflight boundary",
+        )
+
+
 def check_api_consumer_credential_guards():
     api = read_text("UnityTwitter/Assets/Twitter.cs")
 
@@ -765,12 +785,20 @@ def check_docs_plans():
         f"{WHITESPACE_TWEET_PLAN.relative_to(ROOT)} must be present",
     )
     require(
+        CALLBACK_PREFLIGHT_PLAN in plans,
+        f"{CALLBACK_PREFLIGHT_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
         "check_oauth_timestamp_culture" in registered_checks,
         "OAuth timestamp culture contract must remain registered",
     )
     require(
         "check_tweet_text_preflight" in registered_checks,
         "tweet text preflight contract must remain registered",
+    )
+    require(
+        "check_oauth_callback_preflight" in registered_checks,
+        "OAuth callback preflight contract must remain registered",
     )
 
     for plan in plans:
@@ -795,6 +823,7 @@ def main():
         check_oauth_timestamp_culture,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
+        check_oauth_callback_preflight,
         check_tweet_text_preflight,
         check_access_token_exchange_guards,
         check_api_consumer_credential_guards,

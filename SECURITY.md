@@ -46,6 +46,8 @@ Helpful reports include:
   replacement attempts start, and consumes request tokens before exchange.
 - OAuth timestamps are formatted as invariant-culture Unix seconds so signed
   protocol values do not depend on the device or editor locale.
+- Public OAuth and posting coroutines reject missing callbacks before
+  credentials, signing, or network work.
 
 ## Service and API Notes
 

@@ -49,6 +49,12 @@ namespace Twitter
 
         public static IEnumerator GetRequestToken(string consumerKey, string consumerSecret, RequestTokenCallback callback)
         {
+            if (callback == null)
+            {
+                Debug.Log("GetRequestToken - callback is missing.");
+                yield break;
+            }
+
             if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
             {
                 Debug.Log("GetRequestToken - consumer credentials are missing.");
@@ -100,6 +106,12 @@ namespace Twitter
 
         public static IEnumerator GetAccessToken(string consumerKey, string consumerSecret, string requestToken, string pin, AccessTokenCallback callback)
         {
+            if (callback == null)
+            {
+                Debug.Log("GetAccessToken - callback is missing.");
+                yield break;
+            }
+
             if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
             {
                 Debug.Log("GetAccessToken - consumer credentials are missing.");
@@ -202,6 +214,12 @@ namespace Twitter
 
         public static IEnumerator PostTweet(string text, string consumerKey, string consumerSecret, AccessTokenResponse response, PostTweetCallback callback)
         {
+            if (callback == null)
+            {
+                Debug.Log("PostTweet - callback is missing.");
+                yield break;
+            }
+
             if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
             {
                 Debug.Log("PostTweet - consumer credentials are missing.");

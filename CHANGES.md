@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-17
+
+- Public OAuth and posting coroutines reject missing callbacks before
+  credentials, signing, or network work.
+
 ## 2026-06-16
 
 - Made OAuth timestamp conversion and decimal formatting culture-independent

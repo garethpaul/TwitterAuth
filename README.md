@@ -66,6 +66,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - OAuth signing and browser authorization reject null, empty, and
   whitespace-only credentials, request tokens, PINs, and access-token fields
   through the existing redacted failure callbacks.
+- Public OAuth and posting coroutines reject missing callbacks before
+  credentials, signing, or network work.
 - Tweet text rejects null, empty, whitespace-only, and over-limit values before
   OAuth signing or network construction while preserving valid text exactly.
 - OAuth response parsing requires each consumed token or identity field to
@@ -83,7 +85,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   input guard, API-level consumer credential guard, account-identifier log
   redaction, tweet-text validation log redaction, provider-error log redaction,
   exact-key and unique OAuth response parsing, session-only OAuth storage,
-  OAuth-flow guard, and completed-plan checks.
+  callback preflight ordering and mutations, OAuth-flow guard, and
+  completed-plan checks.
 - GitHub Actions runs the same `make check` static baseline on pushes and pull
   requests using Ubuntu 24.04, read-only permissions, immutable action pins,
   disabled checkout credential persistence, and cancellation for superseded
@@ -149,6 +152,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   locale-independent OAuth timestamp signing boundary.
 - See `docs/plans/2026-06-16-whitespace-tweet-preflight.md` for the completed
   tweet text preflight and valid-content preservation boundary.
+- See `docs/plans/2026-06-17-oauth-callback-preflight.md` for public coroutine
+  callback preflight ordering and mutation coverage.
 
 ## Contributing
 

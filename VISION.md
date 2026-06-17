@@ -31,6 +31,8 @@ Priority:
 - Avoid logging tweet body text during validation failures
 - Generate OAuth nonces with cryptographic random bytes
 - Format OAuth timestamps independently of the host locale
+- Public OAuth and posting coroutines reject missing callbacks before
+  credentials, signing, or network work.
 - Guard authorization-page launches when request tokens are missing
 - Guard access-token exchanges when request tokens or PIN values are missing
 - Avoid exchanging PINs before a request token exists
