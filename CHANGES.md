@@ -1,5 +1,18 @@
 # Changes
 
+## 2026-06-19
+
+- Rejected malformed percent escapes, invalid UTF-8, and decoded control
+  characters in OAuth form responses before token state is accepted.
+- Rejected surrounding whitespace in opaque OAuth credentials, tokens, PINs,
+  and account fields before signing or provider side effects.
+- Truncated OAuth timestamps to elapsed whole seconds instead of rounding into
+  a future second, and normalized signature parameters by encoded ordinal key
+  and value.
+- Invalidated in-flight request/access token callbacks when the Unity demo is
+  disabled so hidden or destroyed UI cannot restore stale authorization state
+  or open a browser.
+
 ## 2026-06-17
 
 - Public OAuth and posting coroutines reject missing callbacks before

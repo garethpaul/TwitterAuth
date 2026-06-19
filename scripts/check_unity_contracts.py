@@ -235,10 +235,17 @@ def check_oauth_response_field_parsing():
     )
     require("if (matches.Count != 1)" in api, "OAuth response fields must occur exactly once")
     require(
-        'Uri.UnescapeDataString(matches[0].Groups[1].Value.Replace("+", " "))' in api,
-        "OAuth response parser must decode form values",
+        "TryDecodeFormComponent(matches[0].Groups[1].Value, out decodedValue)" in api,
+        "OAuth response parser must decode form values through the strict helper",
     )
-    require("catch (UriFormatException)" in api, "malformed OAuth response escaping must fail closed")
+    require(
+        "new UTF8Encoding(false, true)" in api and "private static int HexValue(char value)" in api,
+        "malformed OAuth percent escapes and UTF-8 must fail closed",
+    )
+    require(
+        "decodedValue.Any(char.IsControl)" in api,
+        "decoded OAuth response fields must reject control characters",
+    )
 
     duplicate_fixtures = {
         "oauth_token": "oauth_token=first&other=value&oauth_token=second",
@@ -288,8 +295,8 @@ def check_oauth_timestamp_culture():
     require(match is not None, "OAuth timestamp helper must remain present")
     body = match.group("body")
     require(
-        "Convert.ToInt64(ts.TotalSeconds, CultureInfo.InvariantCulture)" in body,
-        "OAuth timestamp conversion must use invariant culture",
+        "((long)ts.TotalSeconds)" in body,
+        "OAuth timestamps must truncate to elapsed whole seconds",
     )
     require(
         ".ToString(CultureInfo.InvariantCulture)" in body,
@@ -298,6 +305,10 @@ def check_oauth_timestamp_culture():
     require(
         "CultureInfo.CurrentCulture" not in body,
         "OAuth timestamps must not depend on the process current culture",
+    )
+    require(
+        "Convert.ToInt64(ts.TotalSeconds" not in body,
+        "OAuth timestamps must not round into the next second",
     )
     require(
         "OAuth timestamp values use invariant-culture Unix-second formatting" in readme,
@@ -567,7 +578,7 @@ def check_oauth_whitespace_input_guards():
     api = read_text("UnityTwitter/Assets/Twitter.cs")
     helper = (
         "private static bool OAuthValueIsMissing(string value)",
-        "string.IsNullOrEmpty(value) || value.Trim().Length == 0",
+        "!string.Equals(value, value.Trim(), StringComparison.Ordinal)",
     )
     for contract in helper:
         require(contract in api, f"OAuth whitespace guard is missing: {contract}")
@@ -583,7 +594,7 @@ def check_oauth_whitespace_input_guards():
         "OAuthValueIsMissing(response.ScreenName)",
     )
     for contract in guarded_values:
-        require(contract in api, f"OAuth input must reject whitespace-only values: {contract}")
+        require(contract in api, f"OAuth input must reject boundary-whitespace values: {contract}")
 
     empty_only_guards = (
         "string.IsNullOrEmpty(consumerKey)",

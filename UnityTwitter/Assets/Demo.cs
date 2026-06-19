@@ -166,6 +166,13 @@ public class Demo : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    private void OnDisable()
+    {
+        m_RequestTokenGeneration++;
+        m_AccessTokenGeneration++;
+        m_RequestTokenResponse = null;
+    }
+
     private void OnRequestTokenCallback(int requestTokenGeneration, bool success, RequestTokenResponse response)
     {
         if (requestTokenGeneration != m_RequestTokenGeneration)

@@ -63,18 +63,22 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - OAuth access tokens are kept only for the active demo session. Startup
   removes values written to `PlayerPrefs` by older revisions, so users must
   authenticate again after restarting the app.
-- OAuth signing and browser authorization reject null, empty, and
-  whitespace-only credentials, request tokens, PINs, and access-token fields
-  through the existing redacted failure callbacks.
+- OAuth signing and browser authorization reject null, empty, whitespace-only,
+  and surrounding-whitespace credentials, request tokens, PINs, and
+  access-token fields through the existing redacted failure callbacks.
 - Public OAuth and posting coroutines reject missing callbacks before
   credentials, signing, or network work.
 - Tweet text rejects null, empty, whitespace-only, and over-limit values before
   OAuth signing or network construction while preserving valid text exactly.
 - OAuth response parsing requires each consumed token or identity field to
   occur exactly once; missing or duplicated fields fail through the same
-  redacted callbacks.
+  redacted callbacks. Malformed percent escapes, invalid UTF-8, and decoded
+  control characters also fail closed.
 - OAuth callback generations ignore superseded request/access token results,
-  clear replacement state, and consume request tokens before exchange.
+  clear replacement state, consume request tokens before exchange, and are
+  invalidated when the demo component is disabled.
+- OAuth timestamps truncate to elapsed Unix seconds, and signature parameters
+  are percent-encoded before ordinal key/value sorting.
 - Run `make check` for static checks. The build step runs Unity only on hosts
   where `unity` is installed.
 
@@ -84,9 +88,10 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   token-safety, token-log redaction, OAuth nonce entropy, access-token exchange
   input guard, API-level consumer credential guard, account-identifier log
   redaction, tweet-text validation log redaction, provider-error log redaction,
-  exact-key and unique OAuth response parsing, session-only OAuth storage,
-  callback preflight ordering and mutations, OAuth-flow guard, and
-  completed-plan checks.
+  exact-key and unique OAuth response parsing, strict form decoding,
+  timestamp/signature normalization, session-only OAuth storage, callback
+  preflight and lifecycle mutations, OAuth-flow guard, and completed-plan
+  checks.
 - GitHub Actions runs the same `make check` static baseline on pushes and pull
   requests using Ubuntu 24.04, read-only permissions, immutable action pins,
   disabled checkout credential persistence, and cancellation for superseded
@@ -140,8 +145,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   API response error log redaction coverage.
 - See `docs/plans/2026-06-12-oauth-response-field-parsing.md` for exact-key,
   decoded, fail-closed OAuth response parsing.
-- See `docs/plans/2026-06-13-oauth-whitespace-input-guards.md` for
-  whitespace-only OAuth input rejection before side effects.
+- See `docs/plans/2026-06-13-oauth-whitespace-input-guards.md` for OAuth input
+  whitespace rejection before side effects.
 - See `docs/plans/2026-06-13-oauth-response-field-uniqueness.md` for
   fail-closed duplicate OAuth response fields.
 - See `docs/plans/2026-06-13-stale-oauth-callback-guards.md` for auth attempt

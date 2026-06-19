@@ -356,7 +356,8 @@ namespace Twitter
 
         private static bool OAuthValueIsMissing(string value)
         {
-            return string.IsNullOrEmpty(value) || value.Trim().Length == 0;
+            return string.IsNullOrEmpty(value) ||
+                   !string.Equals(value, value.Trim(), StringComparison.Ordinal);
         }
 
         private static bool TweetTextIsInvalid(string text)
@@ -400,7 +401,7 @@ namespace Twitter
                                                        "{0}&{1}&{2}",
                                                        httpMethod,
                                                        UrlEncode(NormalizeUrl(new Uri(url))),
-                                                       UrlEncode(nonSecretParameters));
+                                                       UrlEncode(NormalizeRequestParameters(nonSecretParameters)));
 
             // Create our hash key (you might say this is a password)
             string key = string.Format(CultureInfo.InvariantCulture,
@@ -419,7 +420,7 @@ namespace Twitter
         {
             // Default implementation of UNIX time of the current UTC time
             TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            return Convert.ToInt64(ts.TotalSeconds, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+            return ((long)ts.TotalSeconds).ToString(CultureInfo.InvariantCulture);
         }
 
         private static string GenerateNonce()
@@ -488,25 +489,115 @@ namespace Twitter
                 return string.Empty;
             }
 
-            try
-            {
-                return Uri.UnescapeDataString(matches[0].Groups[1].Value.Replace("+", " "));
-            }
-            catch (UriFormatException)
+            string decodedValue;
+            if (!TryDecodeFormComponent(matches[0].Groups[1].Value, out decodedValue) ||
+                decodedValue.Any(char.IsControl))
             {
                 return string.Empty;
             }
+
+            return decodedValue;
         }
 
-        private static string UrlEncode(IEnumerable<KeyValuePair<string, string>> parameters)
+        private static bool TryDecodeFormComponent(string value, out string decodedValue)
         {
+            decodedValue = string.Empty;
+            if (value == null)
+            {
+                return false;
+            }
+
+            StringBuilder decodedBuilder = new StringBuilder();
+            UTF8Encoding strictUtf8 = new UTF8Encoding(false, true);
+            int index = 0;
+            while (index < value.Length)
+            {
+                if (value[index] == '+')
+                {
+                    decodedBuilder.Append(' ');
+                    index++;
+                    continue;
+                }
+
+                if (value[index] != '%')
+                {
+                    decodedBuilder.Append(value[index]);
+                    index++;
+                    continue;
+                }
+
+                List<byte> encodedBytes = new List<byte>();
+                while (index < value.Length && value[index] == '%')
+                {
+                    if (index + 2 >= value.Length)
+                    {
+                        return false;
+                    }
+
+                    int high = HexValue(value[index + 1]);
+                    int low = HexValue(value[index + 2]);
+                    if (high < 0 || low < 0)
+                    {
+                        return false;
+                    }
+
+                    encodedBytes.Add((byte)((high << 4) | low));
+                    index += 3;
+                }
+
+                try
+                {
+                    decodedBuilder.Append(strictUtf8.GetString(encodedBytes.ToArray()));
+                }
+                catch (DecoderFallbackException)
+                {
+                    return false;
+                }
+            }
+
+            decodedValue = decodedBuilder.ToString();
+            return true;
+        }
+
+        private static int HexValue(char value)
+        {
+            if (value >= '0' && value <= '9')
+            {
+                return value - '0';
+            }
+
+            if (value >= 'A' && value <= 'F')
+            {
+                return value - 'A' + 10;
+            }
+
+            if (value >= 'a' && value <= 'f')
+            {
+                return value - 'a' + 10;
+            }
+
+            return -1;
+        }
+
+        private static string NormalizeRequestParameters(IEnumerable<KeyValuePair<string, string>> parameters)
+        {
+            List<KeyValuePair<string, string>> encodedParameters = new List<KeyValuePair<string, string>>();
+            foreach (var parameter in parameters)
+            {
+                encodedParameters.Add(
+                    new KeyValuePair<string, string>(UrlEncode(parameter.Key), UrlEncode(parameter.Value)));
+            }
+
+            encodedParameters.Sort((left, right) =>
+            {
+                int keyComparison = string.CompareOrdinal(left.Key, right.Key);
+                return keyComparison != 0
+                    ? keyComparison
+                    : string.CompareOrdinal(left.Value, right.Value);
+            });
+
             StringBuilder parameterString = new StringBuilder();
-
-            var paramsSorted = from p in parameters
-                               orderby p.Key, p.Value
-                               select p;
-
-            foreach (var item in paramsSorted)
+            foreach (var item in encodedParameters)
             {
                 if (parameterString.Length > 0)
                 {
@@ -517,11 +608,11 @@ namespace Twitter
                     string.Format(
                         CultureInfo.InvariantCulture,
                         "{0}={1}",
-                        UrlEncode(item.Key),
-                        UrlEncode(item.Value)));
+                        item.Key,
+                        item.Value));
             }
 
-            return UrlEncode(parameterString.ToString());
+            return parameterString.ToString();
         }
 
         #endregion

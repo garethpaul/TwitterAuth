@@ -18,7 +18,8 @@ Priority:
 - Keep consumer keys and secrets configured by the developer, not committed
 - Guard API-level OAuth helpers before signing requests with missing consumer
   credentials
-- Reject whitespace-only OAuth inputs before signing or browser authorization
+- Reject whitespace-only or surrounding-whitespace OAuth inputs before signing
+  or browser authorization
 - Reject whitespace-only tweet text before OAuth signing or network requests
 - Avoid logging access tokens and token secrets
 - Keep demo OAuth tokens session-only and remove legacy plaintext PlayerPrefs
@@ -26,11 +27,14 @@ Priority:
 - Avoid logging Twitter user IDs or screen names in demo console output
 - Avoid logging raw OAuth response bodies
 - Reject duplicated OAuth token or account-identity response fields
+- Reject malformed OAuth form escapes, invalid UTF-8, and control characters
 - Ignore superseded OAuth callbacks and consume request tokens once
+- Invalidate pending OAuth callbacks when the demo component is disabled
 - Avoid logging provider-controlled transport or API error details
 - Avoid logging tweet body text during validation failures
 - Generate OAuth nonces with cryptographic random bytes
 - Format OAuth timestamps independently of the host locale
+- Truncate OAuth timestamps and sort encoded signature parameters ordinally
 - Public OAuth and posting coroutines reject missing callbacks before
   credentials, signing, or network work.
 - Guard authorization-page launches when request tokens are missing

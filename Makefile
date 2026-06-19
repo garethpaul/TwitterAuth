@@ -8,6 +8,7 @@ lint:
 
 test: lint
 	$(PYTHON) "$(ROOT)/scripts/test_oauth_callback_preflight_contract.py"
+	$(PYTHON) "$(ROOT)/scripts/test_oauth_hardening_contract.py"
 
 build:
 	@if command -v unity >/dev/null 2>&1; then \

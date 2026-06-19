@@ -37,15 +37,19 @@ Helpful reports include:
   used by older revisions. Production applications should use a platform
   credential store if tokens must survive process restarts.
 - OAuth credentials, request tokens, PINs, and access-token fields reject
-  whitespace-only values before signing, provider requests, or browser launch.
+  whitespace-only or surrounding-whitespace values before signing, provider
+  requests, or browser launch.
 - Tweet text rejects null, empty, whitespace-only, and over-limit values before
   OAuth signing or network construction without rewriting valid content.
 - OAuth token and account-identity response fields must occur exactly once;
-  duplicated or missing fields fail without logging response values.
+  duplicated, missing, malformed, invalid-UTF-8, or control-bearing fields fail
+  without logging response values.
 - The demo ignores superseded OAuth callbacks, clears prior response state when
-  replacement attempts start, and consumes request tokens before exchange.
+  replacement attempts start, consumes request tokens before exchange, and
+  invalidates pending callbacks when the component is disabled.
 - OAuth timestamps are formatted as invariant-culture Unix seconds so signed
-  protocol values do not depend on the device or editor locale.
+  protocol values do not depend on the device or editor locale, cannot round
+  into a future second, and signature parameters use encoded ordinal ordering.
 - Public OAuth and posting coroutines reject missing callbacks before
   credentials, signing, or network work.
 
