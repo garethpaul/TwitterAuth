@@ -1,6 +1,8 @@
 #OS junk files
 [Tt]humbs.db
 *.DS_Store
+__pycache__/
+*.py[cod]
 
 #Visual Studio files
 *.[Oo]bj

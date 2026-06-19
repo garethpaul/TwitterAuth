@@ -1,5 +1,53 @@
 # Changes
 
+## 2026-06-19
+
+- Rejected malformed percent escapes, invalid UTF-8, and decoded control
+  characters in OAuth form responses before token state is accepted.
+- Rejected surrounding whitespace in opaque OAuth credentials, tokens, PINs,
+  and account fields before signing or provider side effects.
+- Truncated OAuth timestamps to elapsed whole seconds instead of rounding into
+  a future second, and normalized signature parameters by encoded ordinal key
+  and value.
+- Invalidated in-flight request/access token callbacks when the Unity demo is
+  disabled so hidden or destroyed UI cannot restore stale authorization state
+  or open a browser.
+
+## 2026-06-17
+
+- Public OAuth and posting coroutines reject missing callbacks before
+  credentials, signing, or network work.
+
+## 2026-06-16
+
+- Made OAuth timestamp conversion and decimal formatting culture-independent
+  so signatures use stable Unix-second protocol values on every host locale.
+- Rejected whitespace-only tweet text before OAuth signing and request
+  construction while preserving valid content exactly.
+
+## 2026-06-14
+
+- Documented the unpinned legacy Unity editor boundary, local-only Demo
+  credentials, session-only tokens, PIN OAuth, explicit posting, legacy `WWW`
+  transport, HTTPS endpoints, and retired Twitter API limitations.
+
+## 2026-06-13
+
+- Ignored superseded OAuth callbacks with per-stage generations, cleared prior
+  auth state on replacement attempts, and consumed request tokens once.
+- Required every consumed OAuth token and identity response field to occur
+  exactly once, rejecting ambiguous duplicated fields through redacted paths.
+- Added exact-key duplicate fixtures for request tokens, token secrets, user
+  IDs, and screen names.
+- Rejected whitespace-only OAuth credentials, request tokens, PINs, and access
+  token fields before signing, network exchange, or browser authorization.
+
+## 2026-06-12
+
+- Replaced unanchored OAuth response regex extraction with exact-key form
+  parsing, percent decoding, and fail-closed malformed-escape handling.
+- Ignored Python bytecode caches produced by local contract compilation.
+
 ## 2026-06-10
 
 - Replaced provider-controlled OAuth transport and tweet response error details
@@ -10,9 +58,12 @@
 - Made local verification root-independent and fixed hosted runner and action
   release annotations to reviewed versions.
 - Added a pinned, read-only GitHub Actions matrix on Python 3.10, 3.12, and
-  3.14 that runs the static `make check` baseline.
+  3.14 that disables checkout credential persistence and runs the static
+  `make check` baseline.
 - Extended the Unity contract checker to require the CI workflow and completed
   CI plan.
+- Bound the checkout credential-persistence assertion to the checkout step so
+  moving the setting to another action cannot satisfy the hosted CI contract.
 
 ## 2026-06-09
 

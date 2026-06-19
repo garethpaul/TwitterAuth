@@ -49,6 +49,12 @@ namespace Twitter
 
         public static IEnumerator GetRequestToken(string consumerKey, string consumerSecret, RequestTokenCallback callback)
         {
+            if (callback == null)
+            {
+                Debug.Log("GetRequestToken - callback is missing.");
+                yield break;
+            }
+
             if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
             {
                 Debug.Log("GetRequestToken - consumer credentials are missing.");
@@ -69,12 +75,12 @@ namespace Twitter
             {
                 RequestTokenResponse response = new RequestTokenResponse
                                                 {
-                                                    Token = Regex.Match(web.text, @"oauth_token=([^&]+)").Groups[1].Value,
-                                                    TokenSecret = Regex.Match(web.text, @"oauth_token_secret=([^&]+)").Groups[1].Value,
+                                                    Token = FormValue(web.text, "oauth_token"),
+                                                    TokenSecret = FormValue(web.text, "oauth_token_secret"),
                                                 };
 
-                if (!string.IsNullOrEmpty(response.Token) &&
-                    !string.IsNullOrEmpty(response.TokenSecret))
+                if (!OAuthValueIsMissing(response.Token) &&
+                    !OAuthValueIsMissing(response.TokenSecret))
                 {
                     callback(true, response);
                 }
@@ -89,7 +95,7 @@ namespace Twitter
 
         public static void OpenAuthorizationPage(string requestToken)
         {
-            if (string.IsNullOrEmpty(requestToken))
+            if (OAuthValueIsMissing(requestToken))
             {
                 Debug.Log("OpenAuthorizationPage - request token is missing.");
                 return;
@@ -100,6 +106,12 @@ namespace Twitter
 
         public static IEnumerator GetAccessToken(string consumerKey, string consumerSecret, string requestToken, string pin, AccessTokenCallback callback)
         {
+            if (callback == null)
+            {
+                Debug.Log("GetAccessToken - callback is missing.");
+                yield break;
+            }
+
             if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
             {
                 Debug.Log("GetAccessToken - consumer credentials are missing.");
@@ -107,7 +119,7 @@ namespace Twitter
                 yield break;
             }
 
-            if (string.IsNullOrEmpty(requestToken) || string.IsNullOrEmpty(pin))
+            if (OAuthValueIsMissing(requestToken) || OAuthValueIsMissing(pin))
             {
                 Debug.Log("GetAccessToken - request token or PIN is missing.");
                 callback(false, null);
@@ -127,16 +139,16 @@ namespace Twitter
             {
                 AccessTokenResponse response = new AccessTokenResponse
                                                {
-                                                   Token = Regex.Match(web.text, @"oauth_token=([^&]+)").Groups[1].Value,
-                                                   TokenSecret = Regex.Match(web.text, @"oauth_token_secret=([^&]+)").Groups[1].Value,
-                                                   UserId = Regex.Match(web.text, @"user_id=([^&]+)").Groups[1].Value,
-                                                   ScreenName = Regex.Match(web.text, @"screen_name=([^&]+)").Groups[1].Value
+                                                   Token = FormValue(web.text, "oauth_token"),
+                                                   TokenSecret = FormValue(web.text, "oauth_token_secret"),
+                                                   UserId = FormValue(web.text, "user_id"),
+                                                   ScreenName = FormValue(web.text, "screen_name")
                                                };
 
-                if (!string.IsNullOrEmpty(response.Token) &&
-                    !string.IsNullOrEmpty(response.TokenSecret) &&
-                    !string.IsNullOrEmpty(response.UserId) &&
-                    !string.IsNullOrEmpty(response.ScreenName))
+                if (!OAuthValueIsMissing(response.Token) &&
+                    !OAuthValueIsMissing(response.TokenSecret) &&
+                    !OAuthValueIsMissing(response.UserId) &&
+                    !OAuthValueIsMissing(response.ScreenName))
                 {
                     callback(true, response);
                 }
@@ -202,6 +214,12 @@ namespace Twitter
 
         public static IEnumerator PostTweet(string text, string consumerKey, string consumerSecret, AccessTokenResponse response, PostTweetCallback callback)
         {
+            if (callback == null)
+            {
+                Debug.Log("PostTweet - callback is missing.");
+                yield break;
+            }
+
             if (ConsumerCredentialsAreMissing(consumerKey, consumerSecret))
             {
                 Debug.Log("PostTweet - consumer credentials are missing.");
@@ -210,54 +228,53 @@ namespace Twitter
             }
 
             if (response == null ||
-                string.IsNullOrEmpty(response.Token) ||
-                string.IsNullOrEmpty(response.TokenSecret))
+                OAuthValueIsMissing(response.Token) ||
+                OAuthValueIsMissing(response.TokenSecret))
             {
                 Debug.Log("PostTweet - access token is missing.");
                 callback(false);
                 yield break;
             }
 
-            if (string.IsNullOrEmpty(text) || text.Length > 140)
+            if (TweetTextIsInvalid(text))
             {
-                Debug.Log("PostTweet - text is empty or too long.");
+                Debug.Log("PostTweet - text is empty, whitespace-only, or too long.");
 
+                callback(false);
+                yield break;
+            }
+
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("status", text);
+
+            // Add data to the form to post.
+            WWWForm form = new WWWForm();
+            form.AddField("status", text);
+
+            // HTTP header
+            var headers = new Hashtable();
+            headers["Authorization"] = GetHeaderWithAccessToken("POST", PostTweetURL, consumerKey, consumerSecret, response, parameters);
+
+            WWW web = new WWW(PostTweetURL, form.data, headers);
+            yield return web;
+
+            if (!string.IsNullOrEmpty(web.error))
+            {
+                Debug.Log("PostTweet - request failed.");
                 callback(false);
             }
             else
             {
-                Dictionary<string, string> parameters = new Dictionary<string, string>();
-                parameters.Add("status", text);
-                
-                // Add data to the form to post.
-                WWWForm form = new WWWForm();
-                form.AddField("status", text);
-                
-                // HTTP header
-                var headers = new Hashtable();
-                headers["Authorization"] = GetHeaderWithAccessToken("POST", PostTweetURL, consumerKey, consumerSecret, response, parameters);
+                string error = Regex.Match(web.text, @"<error>([^&]+)</error>").Groups[1].Value;
 
-                WWW web = new WWW(PostTweetURL, form.data, headers);
-                yield return web;
-
-                if (!string.IsNullOrEmpty(web.error))
+                if (!string.IsNullOrEmpty(error))
                 {
-                    Debug.Log("PostTweet - request failed.");
+                    Debug.Log("PostTweet - response reported an error.");
                     callback(false);
                 }
                 else
                 {
-                    string error = Regex.Match(web.text, @"<error>([^&]+)</error>").Groups[1].Value;
-
-                    if (!string.IsNullOrEmpty(error))
-                    {
-                        Debug.Log("PostTweet - response reported an error.");
-                        callback(false);
-                    }
-                    else
-                    {
-                       callback(true);
-                    }
+                   callback(true);
                 }
             }
         }
@@ -334,7 +351,18 @@ namespace Twitter
 
         private static bool ConsumerCredentialsAreMissing(string consumerKey, string consumerSecret)
         {
-            return string.IsNullOrEmpty(consumerKey) || string.IsNullOrEmpty(consumerSecret);
+            return OAuthValueIsMissing(consumerKey) || OAuthValueIsMissing(consumerSecret);
+        }
+
+        private static bool OAuthValueIsMissing(string value)
+        {
+            return string.IsNullOrEmpty(value) ||
+                   !string.Equals(value, value.Trim(), StringComparison.Ordinal);
+        }
+
+        private static bool TweetTextIsInvalid(string text)
+        {
+            return string.IsNullOrEmpty(text) || text.Trim().Length == 0 || text.Length > 140;
         }
 
         private static string GetFinalOAuthHeader(string HTTPRequestType, string URL, Dictionary<string, string> parameters)
@@ -373,7 +401,7 @@ namespace Twitter
                                                        "{0}&{1}&{2}",
                                                        httpMethod,
                                                        UrlEncode(NormalizeUrl(new Uri(url))),
-                                                       UrlEncode(nonSecretParameters));
+                                                       UrlEncode(NormalizeRequestParameters(nonSecretParameters)));
 
             // Create our hash key (you might say this is a password)
             string key = string.Format(CultureInfo.InvariantCulture,
@@ -392,7 +420,7 @@ namespace Twitter
         {
             // Default implementation of UNIX time of the current UTC time
             TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            return Convert.ToInt64(ts.TotalSeconds, CultureInfo.CurrentCulture).ToString(CultureInfo.CurrentCulture);
+            return ((long)ts.TotalSeconds).ToString(CultureInfo.InvariantCulture);
         }
 
         private static string GenerateNonce()
@@ -445,15 +473,131 @@ namespace Twitter
             return value;
         }
 
-        private static string UrlEncode(IEnumerable<KeyValuePair<string, string>> parameters)
+        private static string FormValue(string form, string key)
         {
+            if (string.IsNullOrEmpty(form) || string.IsNullOrEmpty(key))
+            {
+                return string.Empty;
+            }
+
+            MatchCollection matches = Regex.Matches(
+                form,
+                @"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)"
+            );
+            if (matches.Count != 1)
+            {
+                return string.Empty;
+            }
+
+            string decodedValue;
+            if (!TryDecodeFormComponent(matches[0].Groups[1].Value, out decodedValue) ||
+                decodedValue.Any(char.IsControl))
+            {
+                return string.Empty;
+            }
+
+            return decodedValue;
+        }
+
+        private static bool TryDecodeFormComponent(string value, out string decodedValue)
+        {
+            decodedValue = string.Empty;
+            if (value == null)
+            {
+                return false;
+            }
+
+            StringBuilder decodedBuilder = new StringBuilder();
+            UTF8Encoding strictUtf8 = new UTF8Encoding(false, true);
+            int index = 0;
+            while (index < value.Length)
+            {
+                if (value[index] == '+')
+                {
+                    decodedBuilder.Append(' ');
+                    index++;
+                    continue;
+                }
+
+                if (value[index] != '%')
+                {
+                    decodedBuilder.Append(value[index]);
+                    index++;
+                    continue;
+                }
+
+                List<byte> encodedBytes = new List<byte>();
+                while (index < value.Length && value[index] == '%')
+                {
+                    if (index + 2 >= value.Length)
+                    {
+                        return false;
+                    }
+
+                    int high = HexValue(value[index + 1]);
+                    int low = HexValue(value[index + 2]);
+                    if (high < 0 || low < 0)
+                    {
+                        return false;
+                    }
+
+                    encodedBytes.Add((byte)((high << 4) | low));
+                    index += 3;
+                }
+
+                try
+                {
+                    decodedBuilder.Append(strictUtf8.GetString(encodedBytes.ToArray()));
+                }
+                catch (DecoderFallbackException)
+                {
+                    return false;
+                }
+            }
+
+            decodedValue = decodedBuilder.ToString();
+            return true;
+        }
+
+        private static int HexValue(char value)
+        {
+            if (value >= '0' && value <= '9')
+            {
+                return value - '0';
+            }
+
+            if (value >= 'A' && value <= 'F')
+            {
+                return value - 'A' + 10;
+            }
+
+            if (value >= 'a' && value <= 'f')
+            {
+                return value - 'a' + 10;
+            }
+
+            return -1;
+        }
+
+        private static string NormalizeRequestParameters(IEnumerable<KeyValuePair<string, string>> parameters)
+        {
+            List<KeyValuePair<string, string>> encodedParameters = new List<KeyValuePair<string, string>>();
+            foreach (var parameter in parameters)
+            {
+                encodedParameters.Add(
+                    new KeyValuePair<string, string>(UrlEncode(parameter.Key), UrlEncode(parameter.Value)));
+            }
+
+            encodedParameters.Sort((left, right) =>
+            {
+                int keyComparison = string.CompareOrdinal(left.Key, right.Key);
+                return keyComparison != 0
+                    ? keyComparison
+                    : string.CompareOrdinal(left.Value, right.Value);
+            });
+
             StringBuilder parameterString = new StringBuilder();
-
-            var paramsSorted = from p in parameters
-                               orderby p.Key, p.Value
-                               select p;
-
-            foreach (var item in paramsSorted)
+            foreach (var item in encodedParameters)
             {
                 if (parameterString.Length > 0)
                 {
@@ -464,11 +608,11 @@ namespace Twitter
                     string.Format(
                         CultureInfo.InvariantCulture,
                         "{0}={1}",
-                        UrlEncode(item.Key),
-                        UrlEncode(item.Value)));
+                        item.Key,
+                        item.Value));
             }
 
-            return UrlEncode(parameterString.ToString());
+            return parameterString.ToString();
         }
 
         #endregion

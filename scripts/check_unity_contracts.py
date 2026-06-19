@@ -2,9 +2,12 @@
 """Static verification for the legacy Unity TwitterAuth sample."""
 
 from pathlib import Path
+import ast
 import re
 import sys
 import xml.etree.ElementTree as ET
+
+from oauth_callback_preflight_contract import validation_errors as callback_preflight_errors
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +19,15 @@ ACCOUNT_IDENTIFIER_LOG_PLAN = DOCS_PLANS / "2026-06-09-account-identifier-log-re
 CI_PLAN = DOCS_PLANS / "2026-06-10-ci-baseline.md"
 SESSION_ONLY_TOKEN_PLAN = DOCS_PLANS / "2026-06-10-session-only-oauth-tokens.md"
 PROVIDER_ERROR_LOG_PLAN = DOCS_PLANS / "2026-06-10-provider-error-log-redaction.md"
+OAUTH_RESPONSE_FIELD_PLAN = DOCS_PLANS / "2026-06-12-oauth-response-field-parsing.md"
+OAUTH_WHITESPACE_PLAN = DOCS_PLANS / "2026-06-13-oauth-whitespace-input-guards.md"
+OAUTH_FIELD_UNIQUENESS_PLAN = DOCS_PLANS / "2026-06-13-oauth-response-field-uniqueness.md"
+STALE_OAUTH_CALLBACK_PLAN = DOCS_PLANS / "2026-06-13-stale-oauth-callback-guards.md"
+MAKE_ROOT_PROTECTION_PLAN = DOCS_PLANS / "2026-06-14-make-root-override-protection.md"
+LEGACY_UNITY_SETUP_PLAN = DOCS_PLANS / "2026-06-14-legacy-unity-setup-notes.md"
+INVARIANT_OAUTH_TIMESTAMP_PLAN = DOCS_PLANS / "2026-06-16-invariant-oauth-timestamp.md"
+WHITESPACE_TWEET_PLAN = DOCS_PLANS / "2026-06-16-whitespace-tweet-preflight.md"
+CALLBACK_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-17-oauth-callback-preflight.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 
 
@@ -33,7 +45,30 @@ def require(condition, message):
         raise AssertionError(message)
 
 
+def workflow_step_block(workflow, action):
+    lines = workflow.splitlines()
+    prefix = f"- uses: {action}"
+
+    for index, line in enumerate(lines):
+        stripped_line = line.strip()
+        if stripped_line == prefix or stripped_line.startswith(f"{prefix} #"):
+            indentation = len(line) - len(line.lstrip())
+            block = [line]
+            for following_line in lines[index + 1 :]:
+                following_indentation = len(following_line) - len(following_line.lstrip())
+                if following_line.strip() and following_indentation <= indentation:
+                    break
+                block.append(following_line)
+            return "\n".join(block)
+
+    raise AssertionError(f"CI workflow must define the {action} step")
+
+
 def check_required_project_files():
+    gitignore = read_text(".gitignore")
+    require("__pycache__/" in gitignore, "Python bytecode cache directories must be ignored")
+    require("*.py[cod]" in gitignore, "Python bytecode files must be ignored")
+
     for relative_path in [
         "UnityTwitter/Assets/Demo.cs",
         "UnityTwitter/Assets/Twitter.cs",
@@ -62,6 +97,40 @@ def check_runtime_urls_are_https():
 
     demo = read_text("UnityTwitter/Assets/Demo.cs")
     require("https://dev.twitter.com/apps/new" in demo, "registration URL must use HTTPS")
+
+
+def check_legacy_unity_setup_notes():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    readme = read_text("README.md")
+
+    require(
+        not (ROOT / "UnityTwitter/ProjectSettings/ProjectVersion.txt").exists(),
+        "an exact Unity version must not be claimed without reviewing a newly added ProjectVersion.txt",
+    )
+    require("public string CONSUMER_KEY;" in demo, "Demo must expose the local consumer key field")
+    require("public string CONSUMER_SECRET;" in demo, "Demo must expose the local consumer secret field")
+    require("WWW" in api, "historical setup notes must remain grounded in the legacy WWW transport")
+    for phrase in [
+        "`ProjectVersion.txt`",
+        "Legacy Unity And API Boundary",
+        "entered locally",
+        "Access tokens remain session-only",
+        "PIN-based OAuth",
+        "explicit user-triggered status posting",
+        "legacy `WWW` transport",
+        "retired or unverified",
+        "docs/plans/2026-06-14-legacy-unity-setup-notes.md",
+    ]:
+        require(phrase in readme, f"README.md must document {phrase}")
+    require(
+        "Keep legacy Unity setup, local credential, PIN OAuth" in read_text("VISION.md"),
+        "VISION.md must preserve the legacy setup boundary",
+    )
+    require(
+        "unpinned legacy Unity editor boundary" in read_text("CHANGES.md"),
+        "CHANGES.md must record the legacy setup boundary",
+    )
 
 
 def check_bug_note_status():
@@ -141,6 +210,58 @@ def check_api_provider_error_log_redaction():
         require(redacted_log in api, f"API failure log is missing redacted message: {redacted_log}")
 
 
+def check_oauth_response_field_parsing():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+
+    for field in ["oauth_token", "oauth_token_secret", "user_id", "screen_name"]:
+        require(
+            f'Regex.Match(web.text, @"{field}=([^&]+)")' not in api,
+            f"OAuth response field {field} must not use unanchored direct regex extraction",
+        )
+    for assignment in [
+        'Token = FormValue(web.text, "oauth_token")',
+        'TokenSecret = FormValue(web.text, "oauth_token_secret")',
+        'UserId = FormValue(web.text, "user_id")',
+        'ScreenName = FormValue(web.text, "screen_name")',
+    ]:
+        require(assignment in api, f"OAuth response parsing must include {assignment}")
+    require(
+        'MatchCollection matches = Regex.Matches(' in api,
+        "OAuth response parser must collect all exact-key matches",
+    )
+    require(
+        '@"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)"' in api,
+        "OAuth response parser must match exact form field names",
+    )
+    require("if (matches.Count != 1)" in api, "OAuth response fields must occur exactly once")
+    require(
+        "TryDecodeFormComponent(matches[0].Groups[1].Value, out decodedValue)" in api,
+        "OAuth response parser must decode form values through the strict helper",
+    )
+    require(
+        "new UTF8Encoding(false, true)" in api and "private static int HexValue(char value)" in api,
+        "malformed OAuth percent escapes and UTF-8 must fail closed",
+    )
+    require(
+        "decodedValue.Any(char.IsControl)" in api,
+        "decoded OAuth response fields must reject control characters",
+    )
+
+    duplicate_fixtures = {
+        "oauth_token": "oauth_token=first&other=value&oauth_token=second",
+        "oauth_token_secret": "oauth_token_secret=first&other=value&oauth_token_secret=second",
+        "user_id": "user_id=first&other=value&user_id=second",
+        "screen_name": "screen_name=first&other=value&screen_name=second",
+    }
+    require(
+        set(duplicate_fixtures) == {"oauth_token", "oauth_token_secret", "user_id", "screen_name"},
+        "duplicate OAuth response fixtures must cover every consumed field",
+    )
+    for field, fixture in duplicate_fixtures.items():
+        matches = re.findall(r"(?:^|&)" + re.escape(field) + r"=([^&]*)", fixture)
+        require(len(matches) == 2, f"duplicate fixture for {field} must remain ambiguous")
+
+
 def check_oauth_nonce_entropy():
     api = read_text("UnityTwitter/Assets/Twitter.cs")
     require(
@@ -161,10 +282,52 @@ def check_oauth_nonce_entropy():
     )
 
 
+def check_oauth_timestamp_culture():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    readme = read_text("README.md")
+    security = read_text("SECURITY.md")
+    vision = read_text("VISION.md")
+    match = re.search(
+        r"private static string GenerateTimeStamp\(\)\s*\{(?P<body>.*?)\n\s*\}",
+        api,
+        re.DOTALL,
+    )
+    require(match is not None, "OAuth timestamp helper must remain present")
+    body = match.group("body")
+    require(
+        "((long)ts.TotalSeconds)" in body,
+        "OAuth timestamps must truncate to elapsed whole seconds",
+    )
+    require(
+        ".ToString(CultureInfo.InvariantCulture)" in body,
+        "OAuth timestamp formatting must use invariant culture",
+    )
+    require(
+        "CultureInfo.CurrentCulture" not in body,
+        "OAuth timestamps must not depend on the process current culture",
+    )
+    require(
+        "Convert.ToInt64(ts.TotalSeconds" not in body,
+        "OAuth timestamps must not round into the next second",
+    )
+    require(
+        "OAuth timestamp values use invariant-culture Unix-second formatting" in readme,
+        "README.md must document invariant OAuth timestamp formatting",
+    )
+    require(
+        "OAuth timestamps are formatted as invariant-culture Unix seconds" in security,
+        "SECURITY.md must document invariant OAuth timestamp formatting",
+    )
+    require(
+        "Format OAuth timestamps independently of the host locale" in vision,
+        "VISION.md must retain the invariant OAuth timestamp priority",
+    )
+
+
 def check_authorization_url_token_safety():
     api = read_text("UnityTwitter/Assets/Twitter.cs")
     require(
-        "string.IsNullOrEmpty(requestToken)" in api,
+        "OAuthValueIsMissing(requestToken)" in api,
         "OpenAuthorizationPage must guard missing request-token values",
     )
     require(
@@ -201,7 +364,7 @@ def check_demo_access_flow_guards():
         "tweet submission guard must explain missing access-token state",
     )
     require(
-        "response == null" in api and "string.IsNullOrEmpty(response.Token)" in api,
+        "response == null" in api and "OAuthValueIsMissing(response.Token)" in api,
         "PostTweet must guard missing access-token response before OAuth signing",
     )
     require(
@@ -217,8 +380,75 @@ def check_demo_access_flow_guards():
         "PostTweet validation failures must not log tweet text",
     )
     require(
-        "PostTweet - text is empty or too long." in api,
+        "PostTweet - text is empty, whitespace-only, or too long." in api,
         "PostTweet validation failures must use a redacted text validation message",
+    )
+
+
+def check_tweet_text_preflight():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    readme = read_text("README.md")
+    security = read_text("SECURITY.md")
+    vision = read_text("VISION.md")
+
+    require(
+        "private static bool TweetTextIsInvalid(string text)" in api,
+        "tweet text validation must remain centralized",
+    )
+    require(
+        "return string.IsNullOrEmpty(text) || text.Trim().Length == 0 || text.Length > 140;" in api,
+        "tweet text validation must reject empty, whitespace-only, and over-limit values",
+    )
+
+    match = re.search(
+        r"public static IEnumerator PostTweet\([^)]*\)\s*\{(?P<body>.*?)\n        \}\n\n        #endregion",
+        api,
+        re.DOTALL,
+    )
+    require(match, "PostTweet must remain available for static preflight verification")
+    body = match.group("body")
+
+    ordered_fragments = [
+        "ConsumerCredentialsAreMissing(consumerKey, consumerSecret)",
+        "OAuthValueIsMissing(response.Token)",
+        "TweetTextIsInvalid(text)",
+        'parameters.Add("status", text)',
+        'form.AddField("status", text)',
+        'headers["Authorization"]',
+        "new WWW(PostTweetURL, form.data, headers)",
+    ]
+    positions = [body.find(fragment) for fragment in ordered_fragments]
+    require(
+        all(position >= 0 for position in positions) and positions == sorted(positions),
+        "PostTweet must validate credentials, tokens, and text before request construction",
+    )
+
+    text_guard = body[positions[2] : positions[3]]
+    require(
+        "callback(false);" in text_guard and "yield break;" in text_guard,
+        "invalid tweet text must fail once and stop before request construction",
+    )
+    require(
+        "PostTweet - text is empty, whitespace-only, or too long." in text_guard,
+        "invalid tweet text must use a redacted diagnostic",
+    )
+    require(
+        "text = text.Trim()" not in body
+        and 'parameters.Add("status", text.Trim())' not in body
+        and 'form.AddField("status", text.Trim())' not in body,
+        "valid tweet text must be preserved exactly",
+    )
+    require(
+        "Tweet text rejects null, empty, whitespace-only, and over-limit values" in readme,
+        "README.md must document tweet text preflight validation",
+    )
+    require(
+        "Tweet text rejects null, empty, whitespace-only, and over-limit values" in security,
+        "SECURITY.md must document tweet text preflight validation",
+    )
+    require(
+        "Reject whitespace-only tweet text before OAuth signing or network requests" in vision,
+        "VISION.md must retain the whitespace-only tweet preflight priority",
     )
 
 
@@ -237,11 +467,11 @@ def check_access_token_exchange_guards():
 
     preamble = match.group("preamble")
     require(
-        "string.IsNullOrEmpty(requestToken)" in preamble,
+        "OAuthValueIsMissing(requestToken)" in preamble,
         "GetAccessToken must guard missing request-token values before signing",
     )
     require(
-        "string.IsNullOrEmpty(pin)" in preamble,
+        "OAuthValueIsMissing(pin)" in preamble,
         "GetAccessToken must guard missing PIN values before signing",
     )
     require(
@@ -253,6 +483,23 @@ def check_access_token_exchange_guards():
         "GetAccessToken guard must fail the callback and stop before building "
         "signed requests",
     )
+
+
+def check_oauth_callback_preflight():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    errors = callback_preflight_errors(api)
+    require(not errors, "; ".join(errors))
+
+    contract = (
+        "Public OAuth and posting coroutines reject missing callbacks before "
+        "credentials, signing, or network work."
+    )
+    for relative_path in ("README.md", "SECURITY.md", "VISION.md", "CHANGES.md"):
+        documented_contracts = re.sub(r"\s+", " ", read_text(relative_path))
+        require(
+            contract in documented_contracts,
+            f"{relative_path} must document the callback preflight boundary",
+        )
 
 
 def check_api_consumer_credential_guards():
@@ -286,7 +533,7 @@ def check_api_consumer_credential_guards():
 
     access_token_match = re.search(
         r"public static IEnumerator GetAccessToken\([^)]*\)\s*\{"
-        r"(?P<preamble>.*?)if \(string\.IsNullOrEmpty\(requestToken\)",
+        r"(?P<preamble>.*?)if \(OAuthValueIsMissing\(requestToken\)",
         api,
         re.DOTALL,
     )
@@ -327,8 +574,124 @@ def check_api_consumer_credential_guards():
     )
 
 
+def check_oauth_whitespace_input_guards():
+    api = read_text("UnityTwitter/Assets/Twitter.cs")
+    helper = (
+        "private static bool OAuthValueIsMissing(string value)",
+        "!string.Equals(value, value.Trim(), StringComparison.Ordinal)",
+    )
+    for contract in helper:
+        require(contract in api, f"OAuth whitespace guard is missing: {contract}")
+
+    guarded_values = (
+        "OAuthValueIsMissing(consumerKey)",
+        "OAuthValueIsMissing(consumerSecret)",
+        "OAuthValueIsMissing(requestToken)",
+        "OAuthValueIsMissing(pin)",
+        "OAuthValueIsMissing(response.Token)",
+        "OAuthValueIsMissing(response.TokenSecret)",
+        "OAuthValueIsMissing(response.UserId)",
+        "OAuthValueIsMissing(response.ScreenName)",
+    )
+    for contract in guarded_values:
+        require(contract in api, f"OAuth input must reject boundary-whitespace values: {contract}")
+
+    empty_only_guards = (
+        "string.IsNullOrEmpty(consumerKey)",
+        "string.IsNullOrEmpty(consumerSecret)",
+        "string.IsNullOrEmpty(requestToken)",
+        "string.IsNullOrEmpty(pin)",
+        "string.IsNullOrEmpty(response.Token)",
+        "string.IsNullOrEmpty(response.TokenSecret)",
+        "string.IsNullOrEmpty(response.UserId)",
+        "string.IsNullOrEmpty(response.ScreenName)",
+    )
+    for contract in empty_only_guards:
+        require(contract not in api, f"OAuth input must not use an empty-only guard: {contract}")
+
+    require(
+        api.index("if (OAuthValueIsMissing(requestToken))")
+        < api.index("Application.OpenURL(string.Format(AuthorizationURL"),
+        "request-token whitespace guard must precede browser authorization",
+    )
+    require(
+        api.index("if (OAuthValueIsMissing(requestToken) || OAuthValueIsMissing(pin))")
+        < api.index("WWW web = WWWAccessToken"),
+        "request-token and PIN whitespace guards must precede access-token exchange",
+    )
+
+
+def check_stale_oauth_callback_guards():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    contracts = (
+        "private int m_RequestTokenGeneration;",
+        "private int m_AccessTokenGeneration;",
+        "int requestTokenGeneration = ++m_RequestTokenGeneration;",
+        "OnRequestTokenCallback(requestTokenGeneration, success, response)",
+        "int accessTokenGeneration = ++m_AccessTokenGeneration;",
+        "OnAccessTokenCallback(accessTokenGeneration, success, response)",
+        "if (requestTokenGeneration != m_RequestTokenGeneration)",
+        "if (accessTokenGeneration != m_AccessTokenGeneration)",
+        "string requestToken = m_RequestTokenResponse.Token;",
+        "if (success && response != null)",
+    )
+    for contract in contracts:
+        require(contract in demo, f"stale OAuth callback contract is missing: {contract}")
+
+    require(
+        demo.count("m_RequestTokenResponse = null;") >= 3,
+        "request-token state must clear on replacement, consumption, and failure",
+    )
+    require(
+        demo.count("m_AccessTokenResponse = new AccessTokenResponse();") >= 4,
+        "access-token state must clear on startup, replacement, exchange, and failure",
+    )
+    replacement_start = demo.index("if (GUI.Button(rect, text))")
+    request_launch = demo.index("API.GetRequestToken", replacement_start)
+    require(
+        replacement_start
+        < demo.index("m_RequestTokenResponse = null;", replacement_start)
+        < demo.index("m_AccessTokenResponse = new AccessTokenResponse();", replacement_start)
+        < demo.index("m_AccessTokenGeneration++;", replacement_start)
+        < demo.index("int requestTokenGeneration = ++m_RequestTokenGeneration;", replacement_start)
+        < request_launch,
+        "replacement auth state must clear and invalidate before request-token launch",
+    )
+    token_copy = demo.index("string requestToken = m_RequestTokenResponse.Token;")
+    access_launch = demo.index("API.GetAccessToken", token_copy)
+    require(
+        token_copy
+        < demo.index("m_RequestTokenResponse = null;", token_copy)
+        < demo.index("m_RequestTokenGeneration++;", token_copy)
+        < demo.index("m_AccessTokenResponse = new AccessTokenResponse();", token_copy)
+        < demo.index("int accessTokenGeneration = ++m_AccessTokenGeneration;", token_copy)
+        < access_launch,
+        "request tokens must be copied, consumed, and generation-bound before exchange",
+    )
+    require(
+        demo.index("if (requestTokenGeneration != m_RequestTokenGeneration)")
+        < demo.index("m_RequestTokenResponse = response;"),
+        "request-token callbacks must reject stale generations before state assignment",
+    )
+    require(
+        demo.index("if (accessTokenGeneration != m_AccessTokenGeneration)")
+        < demo.index("m_AccessTokenResponse = response;"),
+        "access-token callbacks must reject stale generations before state assignment",
+    )
+
+    documentation = {
+        "README.md": "OAuth callback generations",
+        "SECURITY.md": "superseded OAuth callbacks",
+        "VISION.md": "Ignore superseded OAuth callbacks",
+        "CHANGES.md": "Ignored superseded OAuth callbacks",
+    }
+    for relative_path, phrase in documentation.items():
+        require(phrase in read_text(relative_path), f"{relative_path} must document stale OAuth callback guards")
+
+
 def check_ci_workflow():
     workflow = read_text(".github/workflows/check.yml")
+    checkout_action = "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10"
     for fragment in [
         "permissions:\n  contents: read",
         "timeout-minutes: 10",
@@ -336,8 +699,9 @@ def check_ci_workflow():
         "concurrency:",
         "cancel-in-progress: true",
         'python-version: ["3.10", "3.12", "3.14"]',
-        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        checkout_action,
         "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+        "persist-credentials: false",
         "workflow_dispatch:",
         "make check",
     ]:
@@ -346,20 +710,52 @@ def check_ci_workflow():
     require("ubuntu-latest" not in workflow, "CI workflow must not use a floating Ubuntu runner")
     require("# v6.0.3" in workflow, "checkout pin annotation must identify the exact release")
     require("# v6.2.0" in workflow, "setup-python pin annotation must identify the exact release")
+    require(workflow.count("actions/checkout@") == 1, "CI workflow must define exactly one checkout action")
+    require(workflow.count("actions/setup-python@") == 1, "CI workflow must define exactly one setup-python action")
+    require(workflow.count("persist-credentials:") == 1, "checkout credential persistence must be configured once")
+    require("persist-credentials: true" not in workflow, "checkout credentials must not persist")
+    checkout_step = workflow_step_block(workflow, checkout_action)
+    require(
+        "\n        with:\n          persist-credentials: false" in checkout_step,
+        "checkout step must disable credential persistence in its with block",
+    )
 
     makefile = read_text("Makefile")
+    makefile_lines = set(makefile.splitlines())
     require(
-        "ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile,
-        "Makefile must resolve commands from the repository root",
+        "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile_lines,
+        "Makefile must protect commands rooted at the repository",
     )
+    require("PYTHON ?= python3" in makefile_lines, "Makefile must preserve the Python command override")
     require('"$(ROOT)/scripts/check_unity_contracts.py"' in makefile, "Makefile must use the rooted checker path")
     require('"$(ROOT)/UnityTwitter"' in makefile, "Makefile must use the rooted Unity project path")
 
-    readme = read_text("README.md")
-    require("GitHub Actions" in readme, "README must document the GitHub Actions check")
+    documentation_contracts = {
+        "README.md": "GitHub Actions runs the same `make check` static baseline",
+        "SECURITY.md": "GitHub Actions runs the static `make check` baseline",
+        "VISION.md": "Keep the static `make check` baseline running in GitHub Actions",
+        "CHANGES.md": "Added a pinned, read-only GitHub Actions matrix",
+        "docs/plans/2026-06-10-ci-baseline.md": "Added read-only GitHub Actions checks",
+    }
+    for relative_path, fragment in documentation_contracts.items():
+        require(fragment in read_text(relative_path), f"{relative_path} must document the GitHub Actions baseline")
 
 
 def check_docs_plans():
+    checker = Path(__file__).read_text(encoding="utf-8")
+    checker_tree = ast.parse(checker)
+    registered_checks = set()
+    for node in checker_tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == "main":
+            for statement in node.body:
+                if (
+                    isinstance(statement, ast.Assign)
+                    and any(isinstance(target, ast.Name) and target.id == "checks" for target in statement.targets)
+                    and isinstance(statement.value, ast.List)
+                ):
+                    registered_checks = {
+                        element.id for element in statement.value.elts if isinstance(element, ast.Name)
+                    }
     require(DOCS_PLANS.is_dir(), "docs/plans must exist")
     plans = sorted(DOCS_PLANS.glob("*.md"))
     require(plans, "docs/plans must contain completed maintenance plans")
@@ -370,6 +766,51 @@ def check_docs_plans():
     require(CI_PLAN in plans, f"{CI_PLAN.relative_to(ROOT)} must be present")
     require(SESSION_ONLY_TOKEN_PLAN in plans, f"{SESSION_ONLY_TOKEN_PLAN.relative_to(ROOT)} must be present")
     require(PROVIDER_ERROR_LOG_PLAN in plans, f"{PROVIDER_ERROR_LOG_PLAN.relative_to(ROOT)} must be present")
+    require(
+        OAUTH_RESPONSE_FIELD_PLAN in plans,
+        f"{OAUTH_RESPONSE_FIELD_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(OAUTH_WHITESPACE_PLAN in plans, f"{OAUTH_WHITESPACE_PLAN.relative_to(ROOT)} must be present")
+    require(
+        OAUTH_FIELD_UNIQUENESS_PLAN in plans,
+        f"{OAUTH_FIELD_UNIQUENESS_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        STALE_OAUTH_CALLBACK_PLAN in plans,
+        f"{STALE_OAUTH_CALLBACK_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        MAKE_ROOT_PROTECTION_PLAN in plans,
+        f"{MAKE_ROOT_PROTECTION_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        LEGACY_UNITY_SETUP_PLAN in plans,
+        f"{LEGACY_UNITY_SETUP_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        INVARIANT_OAUTH_TIMESTAMP_PLAN in plans,
+        f"{INVARIANT_OAUTH_TIMESTAMP_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        WHITESPACE_TWEET_PLAN in plans,
+        f"{WHITESPACE_TWEET_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        CALLBACK_PREFLIGHT_PLAN in plans,
+        f"{CALLBACK_PREFLIGHT_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        "check_oauth_timestamp_culture" in registered_checks,
+        "OAuth timestamp culture contract must remain registered",
+    )
+    require(
+        "check_tweet_text_preflight" in registered_checks,
+        "tweet text preflight contract must remain registered",
+    )
+    require(
+        "check_oauth_callback_preflight" in registered_checks,
+        "OAuth callback preflight contract must remain registered",
+    )
 
     for plan in plans:
         text = plan.read_text(encoding="utf-8")
@@ -381,17 +822,24 @@ def main():
     checks = [
         check_required_project_files,
         check_runtime_urls_are_https,
+        check_legacy_unity_setup_notes,
         check_bug_note_status,
         check_demo_token_logging,
         check_demo_account_identifier_logging,
         check_session_only_oauth_tokens,
         check_api_oauth_response_log_redaction,
         check_api_provider_error_log_redaction,
+        check_oauth_response_field_parsing,
         check_oauth_nonce_entropy,
+        check_oauth_timestamp_culture,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
+        check_oauth_callback_preflight,
+        check_tweet_text_preflight,
         check_access_token_exchange_guards,
         check_api_consumer_credential_guards,
+        check_oauth_whitespace_input_guards,
+        check_stale_oauth_callback_guards,
         check_ci_workflow,
         check_docs_plans,
     ]
