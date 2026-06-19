@@ -3,6 +3,7 @@
 
 from pathlib import Path
 import ast
+import hashlib
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -29,6 +30,10 @@ INVARIANT_OAUTH_TIMESTAMP_PLAN = DOCS_PLANS / "2026-06-16-invariant-oauth-timest
 WHITESPACE_TWEET_PLAN = DOCS_PLANS / "2026-06-16-whitespace-tweet-preflight.md"
 CALLBACK_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-17-oauth-callback-preflight.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
+KNOWN_LEAKED_CREDENTIAL_SHA256 = {
+    "628c180abbc26936cf2f0fdd991bceb0d9678132205e177bc8a1a25a60bbff07",
+    "ebda157821a7750fff285e1c6986c4df75bc689862676721691c4edaa575f932",
+}
 
 
 def fail(message):
@@ -81,6 +86,18 @@ def check_required_project_files():
         require((ROOT / relative_path).exists(), f"{relative_path} must stay checked in")
 
     ET.parse(ROOT / "docs/readme-overview.svg")
+
+
+def check_known_consumer_credentials_are_absent():
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or ".git" in path.parts:
+            continue
+        for candidate in re.findall(rb"[A-Za-z0-9]{20,64}", path.read_bytes()):
+            digest = hashlib.sha256(candidate).hexdigest()
+            require(
+                digest not in KNOWN_LEAKED_CREDENTIAL_SHA256,
+                f"{path.relative_to(ROOT)} contains a known leaked consumer credential",
+            )
 
 
 def check_runtime_urls_are_https():
@@ -821,6 +838,7 @@ def check_docs_plans():
 def main():
     checks = [
         check_required_project_files,
+        check_known_consumer_credentials_are_absent,
         check_runtime_urls_are_https,
         check_legacy_unity_setup_notes,
         check_bug_note_status,
