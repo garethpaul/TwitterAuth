@@ -5,6 +5,7 @@ from pathlib import Path
 import ast
 import hashlib
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -31,6 +32,8 @@ WHITESPACE_TWEET_PLAN = DOCS_PLANS / "2026-06-16-whitespace-tweet-preflight.md"
 CALLBACK_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-17-oauth-callback-preflight.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 KNOWN_LEAKED_CREDENTIAL_SHA256 = {
+    "5f4f4ed76a7f6f581cdcb97da1c7dc2657f144af4798556452cfad4fd90f5336",
+    "6146cff7441e4bf8611f8e8fe1d69ea85573200cc3ec06e6e197d575dfd2a201",
     "628c180abbc26936cf2f0fdd991bceb0d9678132205e177bc8a1a25a60bbff07",
     "ebda157821a7750fff285e1c6986c4df75bc689862676721691c4edaa575f932",
 }
@@ -88,7 +91,7 @@ def check_required_project_files():
     ET.parse(ROOT / "docs/readme-overview.svg")
 
 
-def check_known_consumer_credentials_are_absent():
+def check_known_provider_credentials_are_absent():
     for path in ROOT.rglob("*"):
         if not path.is_file() or ".git" in path.parts:
             continue
@@ -96,8 +99,34 @@ def check_known_consumer_credentials_are_absent():
             digest = hashlib.sha256(candidate).hexdigest()
             require(
                 digest not in KNOWN_LEAKED_CREDENTIAL_SHA256,
-                f"{path.relative_to(ROOT)} contains a known leaked consumer credential",
+                f"{path.relative_to(ROOT)} contains a known leaked provider credential",
             )
+
+
+def unity_library_cache_is_ignored(root=ROOT, probe_path="UnityTwitter/Library/.twitterauth-cache-probe"):
+    result = subprocess.run(
+        ["git", "check-ignore", "--quiet", "--no-index", "--", probe_path],
+        cwd=root,
+        check=False,
+    )
+    if result.returncode not in (0, 1):
+        raise subprocess.CalledProcessError(result.returncode, result.args)
+    return result.returncode == 0
+
+
+def check_generated_unity_cache_is_untracked():
+    require(
+        unity_library_cache_is_ignored(),
+        "Unity's generated Library cache must be ignored",
+    )
+    tracked = subprocess.run(
+        ["git", "ls-files", "--", "UnityTwitter/Library"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    require(not tracked, "Unity's generated Library cache must not be tracked")
 
 
 def check_runtime_urls_are_https():
@@ -838,7 +867,8 @@ def check_docs_plans():
 def main():
     checks = [
         check_required_project_files,
-        check_known_consumer_credentials_are_absent,
+        check_known_provider_credentials_are_absent,
+        check_generated_unity_cache_is_untracked,
         check_runtime_urls_are_https,
         check_legacy_unity_setup_notes,
         check_bug_note_status,

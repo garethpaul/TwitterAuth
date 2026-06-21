@@ -7,6 +7,7 @@ lint:
 	$(PYTHON) "$(ROOT)/scripts/check_unity_contracts.py"
 
 test: lint
+	$(PYTHON) "$(ROOT)/scripts/test_generated_cache_contract.py"
 	$(PYTHON) "$(ROOT)/scripts/test_oauth_callback_preflight_contract.py"
 	$(PYTHON) "$(ROOT)/scripts/test_oauth_hardening_contract.py"
 

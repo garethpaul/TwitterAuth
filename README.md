@@ -159,6 +159,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   tweet text preflight and valid-content preservation boundary.
 - See `docs/plans/2026-06-17-oauth-callback-preflight.md` for public coroutine
   callback preflight ordering and mutation coverage.
+- See `docs/plans/2026-06-20-unity-library-credential-cache.md` for removal of
+  generated Unity cache files that retained historical OAuth access tokens.
 
 ## Contributing
 
