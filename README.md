@@ -81,6 +81,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   are percent-encoded before ordinal key/value sorting.
 - Run `make check` for static checks. The build step runs Unity only on hosts
   where `unity` is installed.
+- Run `make root-test` to verify Make startup, shell, Python, root, and
+  execution-mode authority with adversarial external-directory cases.
 
 ## Testing and Verification
 
@@ -92,12 +94,15 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   timestamp/signature normalization, session-only OAuth storage, callback
   preflight and lifecycle mutations, OAuth-flow guard, and completed-plan
   checks.
-- GitHub Actions runs the same `make check` static baseline on pushes and pull
-  requests using Ubuntu 24.04, read-only permissions, immutable action pins,
+- GitHub Actions runs the same `make check` static baseline through
+  `/usr/bin/make check` on pushes and pull requests using Ubuntu 24.04,
+  read-only permissions, immutable action pins,
   disabled checkout credential persistence, and cancellation for superseded
   runs. Unity editor execution remains optional and host-dependent.
 - Completed maintenance plans live under `docs/plans` and are checked by
   `make check`.
+- See `docs/plans/2026-06-21-make-authority-isolation.md` for the complete Make
+  startup, shell, Python, and execution-mode authority boundary.
 - Legacy Unity editor validation for scene/runtime behavior
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
