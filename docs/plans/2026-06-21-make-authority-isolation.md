@@ -17,8 +17,10 @@ controlled shell, startup-file, execution-mode, and Python expression state.
 
 - Repository and external-directory `make check` passed 24 static checks and 19
   mutation cases; the Unity build retained its documented host skip.
-- Authority tests cover 30 target/root/shell cases plus tool, startup, and mode
-  rejection.
+- Authority tests cover 30 target/root/shell cases, a literal hostile Python
+  path, command and environment Make-syntax rejection, command and environment
+  `MAKEFILE_LIST` rejection, startup boundaries, caller `MAKEFLAGS`, and ten
+  non-executing or error-ignoring modes.
 
 ## Scope Boundary
 
