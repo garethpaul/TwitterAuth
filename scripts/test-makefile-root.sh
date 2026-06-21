@@ -14,6 +14,7 @@ printf '%s|%s|%s\n' "$PWD" "$0" "$*" >> "$TWITTERAUTH_COMMAND_LOG"
 EOF
 chmod +x "$FAKE_PYTHON"
 for script in test-makefile-root.sh check_unity_contracts.py test_generated_cache_contract.py test_oauth_callback_preflight_contract.py test_oauth_hardening_contract.py; do cp "$FAKE_PYTHON" "$CHECKOUT/scripts/$script"; done
+cp "$ROOT_DIR/scripts/run-python.sh" "$CHECKOUT/scripts/run-python.sh"; chmod +x "$CHECKOUT/scripts/run-python.sh"
 FAKE_UNITY="$TEMP_ROOT/trusted unity"; cat >"$FAKE_UNITY" <<'EOF'
 #!/bin/sh
 printf '%s|%s|%s\n' "$PWD" "$0" "$*" >> "$TWITTERAUTH_COMMAND_LOG"
@@ -71,7 +72,8 @@ build check lint root-test test verify: override SHELL := $LATER_FAKE_SHELL
 build check lint root-test test verify: override .SHELLFLAGS := -c
 EOF
 rm -f "$LATER_SHELL_LOG"; (cd "$CONTROL_DIR"&&PATH="$AUTHORITY_PATH" TWITTERAUTH_LATER_SHELL_LOG="$LATER_SHELL_LOG" /usr/bin/make --no-print-directory -f "$MAKEFILE" -f "$LATER_OVERRIDE" check "PYTHON=$FAKE_PYTHON" "UNITY=$FAKE_UNITY") >"$TEMP_ROOT/later-override" 2>&1; [ -s "$LATER_SHELL_LOG" ]
-PATH_PYTHON="$TEMP_ROOT/python3"; PATH_UNITY="$TEMP_ROOT/unity"; PATH_LOG="$TEMP_ROOT/path.log"; cp "$FAKE_PYTHON" "$PATH_PYTHON"; cp "$FAKE_UNITY" "$PATH_UNITY"; (cd "$CONTROL_DIR"&&PATH="$TEMP_ROOT:/usr/bin:/bin" TWITTERAUTH_COMMAND_LOG="$PATH_LOG" /usr/bin/make --no-print-directory -f "$MAKEFILE" check) >"$TEMP_ROOT/path-tools" 2>&1; grep -Fq "$PATH_PYTHON" "$PATH_LOG"; grep -Fq "$PATH_UNITY" "$PATH_LOG"
+PATH_PYTHON="$TEMP_ROOT/python3"; PATH_UNITY="$TEMP_ROOT/unity"; PATH_LOG="$TEMP_ROOT/path.log"; cp "$FAKE_PYTHON" "$PATH_PYTHON"; cp "$FAKE_UNITY" "$PATH_UNITY"; rm -f "$PATH_LOG"; if (cd "$CONTROL_DIR"&&PATH="$TEMP_ROOT:/usr/bin:/bin" TWITTERAUTH_COMMAND_LOG="$PATH_LOG" /usr/bin/make --no-print-directory -f "$MAKEFILE" lint) >"$TEMP_ROOT/path-tools" 2>&1; then exit 1; fi; [ ! -e "$PATH_LOG" ]
+SITE_DIR="$TEMP_ROOT/site"; SITE_MARKER="$TEMP_ROOT/sitecustomize-ran"; mkdir -p "$SITE_DIR"; printf '%s\n' "import os; open('$SITE_MARKER', 'w').close(); os._exit(0)" >"$SITE_DIR/sitecustomize.py"; (cd "$ROOT_DIR"&&PYTHONPATH="$SITE_DIR" /usr/bin/make --no-print-directory lint PYTHON=/usr/bin/python3) >"$TEMP_ROOT/sitecustomize" 2>&1; [ ! -e "$SITE_MARKER" ]
 if (cd "$CONTROL_DIR"&&/usr/bin/make --no-print-directory -f "$MAKEFILE" MAKEFLAGS=-n check) >"$TEMP_ROOT/flags" 2>&1; then exit 1; fi; grep -Fq 'MAKEFLAGS must not be overridden' "$TEMP_ROOT/flags"
 for flag in -n --just-print --dry-run --recon -t --touch -q --question -i --ignore-errors; do if (cd "$CONTROL_DIR"&&/usr/bin/make "$flag" --no-print-directory -f "$MAKEFILE" check) >"$TEMP_ROOT/flag" 2>&1; then exit 1; fi; grep -Fq 'non-executing or error-ignoring MAKEFLAGS are not supported' "$TEMP_ROOT/flag"; done
-printf '%s\n' 'Make authority tests passed: 30 target/authority cases, 6 later recipe-replacement rejections, later root/Python/Unity and non-override shell protection, override/startup/PATH-tool boundary controls, 2 raw Make-syntax rejections, 2 MAKEFILE_LIST rejections, caller MAKEFLAGS rejection, and 10 mode rejections'
+printf '%s\n' 'Make authority tests passed: 30 target/authority cases, 6 later recipe-replacement rejections, later root/Python/Unity and non-override shell protection, override/startup boundary controls, PATH tool rejection, isolated Python startup, 2 raw Make-syntax rejections, 2 MAKEFILE_LIST rejections, caller MAKEFLAGS rejection, and 10 mode rejections'

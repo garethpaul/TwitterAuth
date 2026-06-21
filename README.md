@@ -79,8 +79,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
   invalidated when the demo component is disabled.
 - OAuth timestamps truncate to elapsed Unix seconds, and signature parameters
   are percent-encoded before ordinal key/value sorting.
-- Run `make check` for static checks. The build step runs Unity only on hosts
-  where `unity` is installed.
+- Run `make check` for static checks. The build step runs Unity only when
+  `UNITY` names an explicit absolute editor executable.
 - Run `make root-test` to verify Make startup, shell, Python, root, and
   execution-mode authority with adversarial external-directory cases.
 
@@ -89,12 +89,12 @@ not arbitrary caller-supplied Make programs. Public aliases reject later
 single-colon recipe replacement, embed the reviewed root plus literal `PYTHON`
 and `UNITY` selections before later non-override target variables can alter
 them, and pin `/bin/sh -c` against later non-override shell assignments. GNU
-Make `override` directives remain outside the local trust boundary. Startup
+Make `override` directives in caller-supplied Make programs remain outside the local trust boundary. Startup
 files are parsed before repository checks and may execute caller code first, so
-startup parse behavior is also outside the local trust boundary. PATH resolution
-of the default `python3` and `unity` commands is caller-controlled rather than
-authenticated by this repository; explicit literal executable paths remain
-supported.
+startup parse behavior is also outside the local trust boundary. Repository
+verification defaults to `/usr/bin/python3`, requires explicit tool selections
+to be absolute executables, and uses isolated Python startup (`-I -B`) so
+`PYTHONPATH`, user-site packages, and `sitecustomize.py` cannot replace checks.
 
 ## Testing and Verification
 

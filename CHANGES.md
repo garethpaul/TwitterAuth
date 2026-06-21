@@ -10,9 +10,9 @@
 - Rejected later single-colon replacement of all public aliases, embedded the
   reviewed root and literal Python/Unity selections before later non-override
   target assignments, and pinned the public recipe shell.
-- Narrowed the documented local trust boundary: GNU Make `override`
-  directives, startup parse code, and PATH resolution of default tools remain
-  caller-controlled.
+- Kept GNU Make startup parse code outside the enforceable boundary while
+  rejecting PATH-shadowed defaults and isolating Python from `PYTHONPATH`,
+  user-site packages, and `sitecustomize.py`.
 
 ## 2026-06-19
 
