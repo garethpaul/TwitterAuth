@@ -749,7 +749,7 @@ def check_ci_workflow():
         "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
         "persist-credentials: false",
         "workflow_dispatch:",
-        "make check",
+        "/usr/bin/make check",
     ]:
         require(fragment in workflow, f"CI workflow must include {fragment}")
     require("@v" not in workflow, "CI actions must use immutable commits")
@@ -769,12 +769,27 @@ def check_ci_workflow():
     makefile = read_text("Makefile")
     makefile_lines = set(makefile.splitlines())
     require(
-        "override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile_lines,
+        any(line.startswith("override ROOT := $(shell path=") for line in makefile_lines),
         "Makefile must protect commands rooted at the repository",
     )
     require("PYTHON ?= python3" in makefile_lines, "Makefile must preserve the Python command override")
-    require('"$(ROOT)/scripts/check_unity_contracts.py"' in makefile, "Makefile must use the rooted checker path")
-    require('"$(ROOT)/UnityTwitter"' in makefile, "Makefile must use the rooted Unity project path")
+    require("override PYTHON := $(value PYTHON)" in makefile_lines, "Makefile must freeze the Python override")
+    for authority_contract in (
+        ".DEFAULT_GOAL := check",
+        ".PHONY: __repository-make-authority build check lint root-test test verify",
+        "override SHELL := /bin/sh",
+        "override .SHELLFLAGS := -c",
+        "PYTHON must be a literal executable path, not Make syntax",
+        "MAKEFLAGS must not be overridden for repository verification",
+        "non-executing or error-ignoring MAKEFLAGS are not supported",
+        "MAKEFILES must be empty; repository verification requires this Makefile to be loaded alone",
+        "MAKEFILE_LIST must not be overridden",
+        "repository Makefile must be loaded alone",
+    ):
+        require(authority_contract in makefile, f"Makefile must preserve authority contract: {authority_contract}")
+    require('"$$ROOT/scripts/check_unity_contracts.py"' in makefile, "Makefile must use the rooted checker path")
+    require('"$$ROOT/scripts/test-makefile-root.sh"' in makefile, "Makefile must run authority regressions")
+    require('"$$ROOT/UnityTwitter"' in makefile, "Makefile must use the rooted Unity project path")
 
     documentation_contracts = {
         "README.md": "GitHub Actions runs the same `make check` static baseline",
