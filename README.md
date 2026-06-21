@@ -84,6 +84,18 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Run `make root-test` to verify Make startup, shell, Python, root, and
   execution-mode authority with adversarial external-directory cases.
 
+The local verification boundary protects the checked-in Makefile definitions,
+not arbitrary caller-supplied Make programs. Public aliases reject later
+single-colon recipe replacement, embed the reviewed root plus literal `PYTHON`
+and `UNITY` selections before later non-override target variables can alter
+them, and pin `/bin/sh -c` against later non-override shell assignments. GNU
+Make `override` directives remain outside the local trust boundary. Startup
+files are parsed before repository checks and may execute caller code first, so
+startup parse behavior is also outside the local trust boundary. PATH resolution
+of the default `python3` and `unity` commands is caller-controlled rather than
+authenticated by this repository; explicit literal executable paths remain
+supported.
+
 ## Testing and Verification
 
 - `make check` runs static project, HTTPS endpoint, authorization URL

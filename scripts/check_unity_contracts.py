@@ -774,6 +774,8 @@ def check_ci_workflow():
     )
     require("PYTHON ?= python3" in makefile_lines, "Makefile must preserve the Python command override")
     require("override PYTHON := $(value PYTHON)" in makefile_lines, "Makefile must freeze the Python override")
+    require("UNITY ?= unity" in makefile_lines, "Makefile must preserve the Unity command override")
+    require("override UNITY := $(value UNITY)" in makefile_lines, "Makefile must freeze the Unity override")
     for authority_contract in (
         ".DEFAULT_GOAL := check",
         ".PHONY: __repository-make-authority build check lint root-test test verify",
@@ -787,9 +789,29 @@ def check_ci_workflow():
         "repository Makefile must be loaded alone",
     ):
         require(authority_contract in makefile, f"Makefile must preserve authority contract: {authority_contract}")
-    require('"$$ROOT/scripts/check_unity_contracts.py"' in makefile, "Makefile must use the rooted checker path")
-    require('"$$ROOT/scripts/test-makefile-root.sh"' in makefile, "Makefile must run authority regressions")
-    require('"$$ROOT/UnityTwitter"' in makefile, "Makefile must use the rooted Unity project path")
+    require("override REPOSITORY_ROOT_LITERAL :=" in makefile, "Makefile must embed its reviewed root")
+    require("override REPOSITORY_PYTHON_LITERAL :=" in makefile, "Makefile must embed its reviewed Python command")
+    require("override REPOSITORY_UNITY_LITERAL :=" in makefile, "Makefile must embed its reviewed Unity command")
+    require("lint::" in makefile, "Makefile public recipes must use double-colon rules")
+    require("test:: lint" in makefile, "Makefile must preserve test-to-lint ordering")
+    require("verify:: root-test lint test build" in makefile, "Makefile must preserve the full verification gate")
+
+    authority_script = read_text("scripts/test-makefile-root.sh")
+    require("6 later recipe-replacement rejections" in authority_script, "authority tests must reject all public recipe replacements")
+    require("override/startup/PATH-tool boundary controls" in authority_script, "authority tests must exercise the documented exclusions")
+
+    authority_docs = "\n".join(
+        read_text(path)
+        for path in ("README.md", "CHANGES.md", "docs/plans/2026-06-21-make-authority-isolation.md")
+    )
+    for phrase in (
+        "non-override",
+        "GNU Make `override` directives",
+        "outside the local trust boundary",
+        "startup files are parsed before repository checks",
+        "PATH resolution",
+    ):
+        require(phrase in authority_docs, f"Make authority documentation must state {phrase!r}")
 
     documentation_contracts = {
         "README.md": "GitHub Actions runs the same `make check` static baseline",

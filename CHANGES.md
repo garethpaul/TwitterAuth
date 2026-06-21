@@ -7,6 +7,12 @@
   error-ignoring modes.
 - Added adversarial Make authority coverage and pinned hosted verification to
   `/usr/bin/make check` without changing the Unity application.
+- Rejected later single-colon replacement of all public aliases, embedded the
+  reviewed root and literal Python/Unity selections before later non-override
+  target assignments, and pinned the public recipe shell.
+- Narrowed the documented local trust boundary: GNU Make `override`
+  directives, startup parse code, and PATH resolution of default tools remain
+  caller-controlled.
 
 ## 2026-06-19
 
