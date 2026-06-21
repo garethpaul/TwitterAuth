@@ -103,10 +103,20 @@ def check_known_provider_credentials_are_absent():
             )
 
 
+def unity_library_cache_is_ignored(root=ROOT, probe_path="UnityTwitter/Library/.twitterauth-cache-probe"):
+    result = subprocess.run(
+        ["git", "check-ignore", "--quiet", "--no-index", "--", probe_path],
+        cwd=root,
+        check=False,
+    )
+    if result.returncode not in (0, 1):
+        raise subprocess.CalledProcessError(result.returncode, result.args)
+    return result.returncode == 0
+
+
 def check_generated_unity_cache_is_untracked():
-    gitignore = read_text(".gitignore")
     require(
-        "/UnityTwitter/Library/" in gitignore,
+        unity_library_cache_is_ignored(),
         "Unity's generated Library cache must be ignored",
     )
     tracked = subprocess.run(

@@ -13,6 +13,7 @@ is not required to build or understand the sample.
 
 - Remove the tracked `UnityTwitter/Library` cache.
 - Ignore future local cache regeneration.
+- Verify Git's effective ignore result instead of matching raw ignore-file text.
 - Keep hash-based rejection for the historical provider credentials.
 - Fail verification whenever files under the generated cache become tracked.
 
@@ -24,5 +25,8 @@ or sessions.
 ## Verification
 
 - `python3 scripts/check_unity_contracts.py`
+- `python3 scripts/test_generated_cache_contract.py`
 - `make check`
 - Current-tree Gitleaks scan with redacted output
+
+The generated-cache test rejects missing, commented, and negated ignore rules.
