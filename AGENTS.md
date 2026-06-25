@@ -45,6 +45,9 @@
 - Keep tweet posting disabled by default. Authentication-only checks should
   leave `ALLOW_TWEET_POSTING` off; enable it only for deliberate live-post
   testing with an appropriate test account.
+- Do not serialize `ALLOW_TWEET_POSTING` into the checked-in scene. The legacy
+  binary scene must omit the field so fresh checkouts retain the source-level
+  false default.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-twitterauth-baseline.md` for the current static verification baseline.
@@ -52,6 +55,8 @@
 - See `docs/plans/2026-06-08-twitterauth-post-token-guard.md` for the access-token guard on tweet submission.
 - See `docs/plans/2026-06-25-authentication-only-demo.md` for the default
   no-post demo path and explicit live-post Inspector opt-in.
+- See `docs/plans/2026-06-25-authentication-only-scene-default.md` for the
+  binary-scene serialization guard.
 
 ## Agent workflow
 

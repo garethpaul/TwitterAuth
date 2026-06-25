@@ -31,6 +31,7 @@ INVARIANT_OAUTH_TIMESTAMP_PLAN = DOCS_PLANS / "2026-06-16-invariant-oauth-timest
 WHITESPACE_TWEET_PLAN = DOCS_PLANS / "2026-06-16-whitespace-tweet-preflight.md"
 CALLBACK_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-17-oauth-callback-preflight.md"
 AUTHENTICATION_ONLY_DEMO_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-demo.md"
+AUTHENTICATION_ONLY_SCENE_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-scene-default.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 KNOWN_LEAKED_CREDENTIAL_SHA256 = {
     "5f4f4ed76a7f6f581cdcb97da1c7dc2657f144af4798556452cfad4fd90f5336",
@@ -84,6 +85,7 @@ def check_required_project_files():
         "UnityTwitter/Assets/Demo.unity",
         "UnityTwitter/ProjectSettings/ProjectSettings.asset",
         ".github/workflows/check.yml",
+        "scripts/test_authentication_only_scene_contract.py",
         "docs/readme-overview.svg",
         "docs/bugs/p2-plain-http-runtime-endpoint-af8489704cbb4afe.md",
     ]:
@@ -113,6 +115,10 @@ def unity_library_cache_is_ignored(root=ROOT, probe_path="UnityTwitter/Library/.
     if result.returncode not in (0, 1):
         raise subprocess.CalledProcessError(result.returncode, result.args)
     return result.returncode == 0
+
+
+def demo_scene_posting_is_disabled(scene):
+    return b"ALLOW_TWEET_POSTING" not in scene
 
 
 def check_generated_unity_cache_is_untracked():
@@ -434,6 +440,8 @@ def check_demo_access_flow_guards():
 
 def check_authentication_only_demo_path():
     demo = read_text("UnityTwitter/Assets/Demo.cs")
+    scene = (ROOT / "UnityTwitter/Assets/Demo.unity").read_bytes()
+    makefile = read_text("Makefile")
     readme = read_text("README.md")
     security = read_text("SECURITY.md")
     vision = read_text("VISION.md")
@@ -446,6 +454,14 @@ def check_authentication_only_demo_path():
     require(
         "public bool ALLOW_TWEET_POSTING = true;" not in demo,
         "tweet posting must remain disabled by default",
+    )
+    require(
+        demo_scene_posting_is_disabled(scene),
+        "Demo.unity must omit a serialized tweet-posting opt-in",
+    )
+    require(
+        "scripts/test_authentication_only_scene_contract.py" in makefile,
+        "make test must run the authentication-only scene mutation",
     )
 
     match = re.search(
@@ -469,14 +485,45 @@ def check_authentication_only_demo_path():
         "authentication-only mode must stop before tweet input and posting",
     )
     documentation_contracts = {
-        "README.md": (readme, "Tweet posting is disabled by default"),
-        "SECURITY.md": (security, "Tweet posting is disabled by default"),
-        "VISION.md": (vision, "Keep authentication-only mode as the default"),
-        "AGENTS.md": (agents, "Keep tweet posting disabled by default"),
-        "CHANGES.md": (changes, "Added a default authentication-only demo path"),
+        "README.md": (
+            readme,
+            (
+                "Tweet posting is disabled by default",
+                "The checked-in binary scene omits the serialized posting opt-in",
+            ),
+        ),
+        "SECURITY.md": (
+            security,
+            (
+                "Tweet posting is disabled by default",
+                "The checked-in binary scene omits the posting opt-in field",
+            ),
+        ),
+        "VISION.md": (
+            vision,
+            (
+                "Keep authentication-only mode as the default",
+                "Keep the checked-in scene free of a serialized posting opt-in",
+            ),
+        ),
+        "AGENTS.md": (
+            agents,
+            (
+                "Keep tweet posting disabled by default",
+                "Do not serialize `ALLOW_TWEET_POSTING` into the checked-in scene",
+            ),
+        ),
+        "CHANGES.md": (
+            changes,
+            (
+                "Added a default authentication-only demo path",
+                "Protected the checked-in binary Demo scene",
+            ),
+        ),
     }
-    for relative_path, (text, fragment) in documentation_contracts.items():
-        require(fragment in text, f"{relative_path} must document authentication-only mode")
+    for relative_path, (text, fragments) in documentation_contracts.items():
+        for fragment in fragments:
+            require(fragment in text, f"{relative_path} must document authentication-only mode")
 
 
 def check_tweet_text_preflight():
@@ -935,6 +982,10 @@ def check_docs_plans():
     require(
         AUTHENTICATION_ONLY_DEMO_PLAN in plans,
         f"{AUTHENTICATION_ONLY_DEMO_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        AUTHENTICATION_ONLY_SCENE_PLAN in plans,
+        f"{AUTHENTICATION_ONLY_SCENE_PLAN.relative_to(ROOT)} must be present",
     )
     require(
         "check_oauth_timestamp_culture" in registered_checks,

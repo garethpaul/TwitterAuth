@@ -1,5 +1,72 @@
 # Changes
 
+## 2026-06-25 11:40 PDT - P2 - Guard the serialized no-post default
+
+### Summary
+
+Protected the checked-in binary Demo scene from silently serializing the public
+tweet-posting opt-in. The source default and committed scene now have one
+mutation-tested authentication-only boundary.
+
+### Work completed
+
+- Added a binary-scene helper that requires `Demo.unity` to omit the
+  `ALLOW_TWEET_POSTING` field token.
+- Added a hostile mutation that appends the serialized field token and proves
+  the canonical safety predicate rejects it.
+- Registered the focused mutation in `make test` and synchronized usage,
+  security, roadmap, contributor, and plan guidance.
+
+### Threads
+
+- Started: none; the focused checker gap was fixed directly.
+- Continued: none.
+- Stopped: none.
+
+### Files changed
+
+- `scripts/check_unity_contracts.py` — enforced the binary scene invariant.
+- `scripts/test_authentication_only_scene_contract.py` — added the hostile
+  serialized-field mutation.
+- `Makefile` — registered the focused mutation in the public test gate.
+- `README.md`, `SECURITY.md`, `VISION.md`, `AGENTS.md` — documented the scene
+  and source default boundary.
+- `docs/plans/2026-06-25-authentication-only-scene-default.md` — recorded scope
+  and verification evidence.
+
+### Validation
+
+- Red-first focused test — failed on the missing scene predicate import before
+  checker implementation.
+- Focused scene mutation — passed and rejected one appended posting-field token.
+- Initial `/usr/bin/make check` expectation wrapper — incorrectly expected a
+  failure after the focused fix; the full gate actually passed with the new
+  mutation, and the wrapper alone returned nonzero.
+- Diff review — found the first checker edit replaced the original no-post
+  documentation assertions; corrected it to enforce both old and new phrases.
+- `/usr/bin/python3 -m py_compile scripts/check_unity_contracts.py scripts/test_authentication_only_scene_contract.py`
+  — passed.
+- Root and external-directory `/usr/bin/make check` — both passed 25 canonical
+  contracts, 30 Make authority cases, 4 cache mutations, 1 scene mutation, 6
+  callback mutations, and 9 OAuth mutations; Unity skipped without an editor.
+- `git diff --check` and explicit `Demo.unity` unchanged assertion — passed.
+- Unity runtime — unavailable; the binary scene was inspected as bytes only.
+
+### Bugs / findings
+
+- P2: the source checker guaranteed a false field declaration but did not
+  detect a future checked-in scene that serialized the public flag.
+
+### Blockers
+
+- No compatible legacy Unity editor is available to render the scene; the
+  repository intentionally preserves its Unity 4.3.4f1 binary format.
+
+### Next action
+
+- Open the focused pull request, run exact-head review and hosted checks, and
+  merge only if the reviewed commit remains green.
+
 ## 2026-06-25 11:35 PDT - P2 - Default to authentication-only demo mode
 
 ### Summary
