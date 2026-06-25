@@ -10,6 +10,7 @@ public class Demo : MonoBehaviour
     private const string PLAYER_PREFS_TWITTER_USER_SCREEN_NAME = "TwitterUserScreenName";
     private const string PLAYER_PREFS_TWITTER_USER_TOKEN = "TwitterUserToken";
     private const string PLAYER_PREFS_TWITTER_USER_TOKEN_SECRET = "TwitterUserTokenSecret";
+    public bool ALLOW_TWEET_POSTING;
     public string CONSUMER_KEY;
     public string CONSUMER_SECRET;
     public float PIN_ENTER_HEIGHT;
@@ -132,6 +133,12 @@ public class Demo : MonoBehaviour
         rect.y = Screen.height * TWEET_INPUT_Y;
         rect.width = Screen.width * TWEET_INPUT_WIDTH;
         rect.height = Screen.height * TWEET_INPUT_HEIGHT;
+
+        if (!ALLOW_TWEET_POSTING)
+        {
+            GUI.Label(rect, "Authentication-only mode. Tweet posting is disabled.");
+            return;
+        }
 
         m_Tweet = GUI.TextField(rect, m_Tweet);
 

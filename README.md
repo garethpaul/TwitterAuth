@@ -40,6 +40,10 @@ Additional scan context:
   the Demo object in the Unity Inspector. Never commit those values.
 - Access tokens remain session-only, so restarting the demo requires a new
   authorization flow.
+- Tweet posting is disabled by default. Authentication-only testing remains
+  available, and developers must explicitly enable `ALLOW_TWEET_POSTING` on
+  the Demo object in the Inspector before the tweet input or post action is
+  shown.
 - The sample uses PIN-based OAuth, explicit user-triggered status posting,
   Unity's legacy `WWW` transport, and checked-in HTTPS Twitter endpoints.
 - OAuth timestamp values use invariant-culture Unix-second formatting so
@@ -63,6 +67,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - OAuth access tokens are kept only for the active demo session. Startup
   removes values written to `PlayerPrefs` by older revisions, so users must
   authenticate again after restarting the app.
+- Leave `ALLOW_TWEET_POSTING` disabled for authentication-only testing. Enable
+  it explicitly on the Demo object only when live posting is intended and
+  safe to exercise.
 - OAuth signing and browser authorization reject null, empty, whitespace-only,
   and surrounding-whitespace credentials, request tokens, PINs, and
   access-token fields through the existing redacted failure callbacks.

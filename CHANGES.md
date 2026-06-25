@@ -1,5 +1,74 @@
 # Changes
 
+## 2026-06-25 11:35 PDT - P2 - Default to authentication-only demo mode
+
+### Summary
+
+Added a default authentication-only demo path so the legacy PIN OAuth flow can
+be inspected without exposing tweet composition or posting controls. Live
+posting now requires an explicit Inspector opt-in.
+
+### Work completed
+
+- Added a default-false `ALLOW_TWEET_POSTING` Demo setting and a visible
+  authentication-only status label.
+- Added a registered static contract that enforces the safe default, UI order,
+  documentation, completed plan evidence, and checker registration.
+- Updated public usage, security, roadmap, and contributor guidance.
+
+### Threads
+
+- Started: none; this focused change was completed directly.
+- Continued: none.
+- Stopped: none.
+
+### Files changed
+
+- `UnityTwitter/Assets/Demo.cs` — gated tweet input and posting behind an
+  explicit Inspector setting.
+- `scripts/check_unity_contracts.py` — added the authentication-only contract.
+- `README.md`, `SECURITY.md`, `VISION.md`, `AGENTS.md` — documented the safe
+  default and live-post opt-in.
+- `docs/plans/2026-06-25-authentication-only-demo.md` — recorded scope and
+  verification evidence.
+
+### Validation
+
+- Red-first focused contract — failed on the missing Inspector opt-in as
+  expected before production changes.
+- `python3 -I scripts/check_unity_contracts.py` — unsupported direct invocation
+  failed because isolated mode omits the sibling contract module; validation
+  used the repository-owned `scripts/run-python.sh` launcher instead.
+- Initial copied mutation harness — failed before the focused contract because
+  the copy removed `.git`, which the existing cache-ignore check requires; the
+  harness was corrected to preserve repository metadata.
+- Two focused source mutations — removing the posting guard and enabling the
+  flag by default were both rejected for the intended contract violations.
+- `/usr/bin/python3 -m py_compile scripts/check_unity_contracts.py` — passed.
+- `/usr/bin/make check` — passed 25 canonical contracts, 30 Make authority
+  cases, and the existing 4 cache, 6 callback, and 9 OAuth hostile mutations;
+  Unity execution skipped truthfully because no editor was configured.
+- `(cd /tmp && /usr/bin/make --no-print-directory -f <repo>/Makefile check)` —
+  passed the same full gate from outside the repository.
+- `git diff --check` — passed.
+- Unity runtime — unavailable on this Linux host; no live provider request or
+  tweet was attempted.
+
+### Bugs / findings
+
+- P2: the demo always exposed tweet composition and posting controls after
+  authentication, leaving no safe authentication-only exercise path.
+
+### Blockers
+
+- A compatible legacy Unity editor and retired provider flow are unavailable
+  locally; hosted static checks remain authoritative for the checked-in gate.
+
+### Next action
+
+- Open a focused pull request, run exact-head Codex review and hosted checks,
+  and merge only if both remain clean.
+
 ## 2026-06-21
 
 - Hardened the Make verification gate against caller-controlled Python

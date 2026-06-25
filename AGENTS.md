@@ -42,11 +42,16 @@
 ## Safety and gotchas
 
 - Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+- Keep tweet posting disabled by default. Authentication-only checks should
+  leave `ALLOW_TWEET_POSTING` off; enable it only for deliberate live-post
+  testing with an appropriate test account.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-twitterauth-baseline.md` for the current static verification baseline.
 - See `docs/plans/2026-06-08-twitterauth-pin-guard.md` for the request-token guard on PIN submission.
 - See `docs/plans/2026-06-08-twitterauth-post-token-guard.md` for the access-token guard on tweet submission.
+- See `docs/plans/2026-06-25-authentication-only-demo.md` for the default
+  no-post demo path and explicit live-post Inspector opt-in.
 
 ## Agent workflow
 
