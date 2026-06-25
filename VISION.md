@@ -43,6 +43,8 @@ Priority:
 - Avoid posting tweets before an access token exists
 - Keep authentication-only mode as the default and require an explicit
   Inspector opt-in before showing tweet posting controls
+- Keep the checked-in scene free of a serialized posting opt-in so source and
+  scene defaults cannot drift
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context
 - Keep runtime network endpoints on HTTPS
 - Keep demo logs redacted when OAuth succeeds

@@ -43,7 +43,8 @@ Additional scan context:
 - Tweet posting is disabled by default. Authentication-only testing remains
   available, and developers must explicitly enable `ALLOW_TWEET_POSTING` on
   the Demo object in the Inspector before the tweet input or post action is
-  shown.
+  shown. The checked-in binary scene omits the serialized posting opt-in, so a
+  fresh checkout remains in authentication-only mode.
 - The sample uses PIN-based OAuth, explicit user-triggered status posting,
   Unity's legacy `WWW` transport, and checked-in HTTPS Twitter endpoints.
 - OAuth timestamp values use invariant-culture Unix-second formatting so

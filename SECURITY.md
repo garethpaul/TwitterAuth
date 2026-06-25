@@ -30,6 +30,9 @@ Helpful reports include:
   authentication flow unless a developer explicitly enables
   `ALLOW_TWEET_POSTING` in the Inspector; do not enable it with production
   credentials or accounts during routine testing.
+- The checked-in binary scene omits the posting opt-in field. Static mutation
+  coverage rejects a scene that begins serializing that field, preventing a
+  committed Inspector value from silently changing the repository default.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found mobile permission or privacy-sensitive data handling; changes in those areas should receive security-focused review before merge.
