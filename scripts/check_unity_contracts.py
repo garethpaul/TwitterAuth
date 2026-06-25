@@ -30,6 +30,7 @@ LEGACY_UNITY_SETUP_PLAN = DOCS_PLANS / "2026-06-14-legacy-unity-setup-notes.md"
 INVARIANT_OAUTH_TIMESTAMP_PLAN = DOCS_PLANS / "2026-06-16-invariant-oauth-timestamp.md"
 WHITESPACE_TWEET_PLAN = DOCS_PLANS / "2026-06-16-whitespace-tweet-preflight.md"
 CALLBACK_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-17-oauth-callback-preflight.md"
+AUTHENTICATION_ONLY_DEMO_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-demo.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 KNOWN_LEAKED_CREDENTIAL_SHA256 = {
     "5f4f4ed76a7f6f581cdcb97da1c7dc2657f144af4798556452cfad4fd90f5336",
@@ -429,6 +430,53 @@ def check_demo_access_flow_guards():
         "PostTweet - text is empty, whitespace-only, or too long." in api,
         "PostTweet validation failures must use a redacted text validation message",
     )
+
+
+def check_authentication_only_demo_path():
+    demo = read_text("UnityTwitter/Assets/Demo.cs")
+    readme = read_text("README.md")
+    security = read_text("SECURITY.md")
+    vision = read_text("VISION.md")
+    agents = read_text("AGENTS.md")
+    changes = read_text("CHANGES.md")
+    require(
+        "public bool ALLOW_TWEET_POSTING;" in demo,
+        "tweet posting must require an explicit Inspector opt-in",
+    )
+    require(
+        "public bool ALLOW_TWEET_POSTING = true;" not in demo,
+        "tweet posting must remain disabled by default",
+    )
+
+    match = re.search(
+        r"private void OnGUI\(\)\s*\{(?P<body>.*?)\n    \}\n\n    private void ClearLegacyStoredCredentials",
+        demo,
+        re.DOTALL,
+    )
+    require(match, "Demo.OnGUI must remain available for authentication-only verification")
+    body = match.group("body")
+    ordered_fragments = [
+        'GUI.Button(rect, "Enter PIN")',
+        "if (!ALLOW_TWEET_POSTING)",
+        'GUI.Label(rect, "Authentication-only mode. Tweet posting is disabled.")',
+        "return;",
+        "m_Tweet = GUI.TextField(rect, m_Tweet);",
+        "API.PostTweet(",
+    ]
+    positions = [body.find(fragment) for fragment in ordered_fragments]
+    require(
+        all(position >= 0 for position in positions) and positions == sorted(positions),
+        "authentication-only mode must stop before tweet input and posting",
+    )
+    documentation_contracts = {
+        "README.md": (readme, "Tweet posting is disabled by default"),
+        "SECURITY.md": (security, "Tweet posting is disabled by default"),
+        "VISION.md": (vision, "Keep authentication-only mode as the default"),
+        "AGENTS.md": (agents, "Keep tweet posting disabled by default"),
+        "CHANGES.md": (changes, "Added a default authentication-only demo path"),
+    }
+    for relative_path, (text, fragment) in documentation_contracts.items():
+        require(fragment in text, f"{relative_path} must document authentication-only mode")
 
 
 def check_tweet_text_preflight():
@@ -885,6 +933,10 @@ def check_docs_plans():
         f"{CALLBACK_PREFLIGHT_PLAN.relative_to(ROOT)} must be present",
     )
     require(
+        AUTHENTICATION_ONLY_DEMO_PLAN in plans,
+        f"{AUTHENTICATION_ONLY_DEMO_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
         "check_oauth_timestamp_culture" in registered_checks,
         "OAuth timestamp culture contract must remain registered",
     )
@@ -895,6 +947,10 @@ def check_docs_plans():
     require(
         "check_oauth_callback_preflight" in registered_checks,
         "OAuth callback preflight contract must remain registered",
+    )
+    require(
+        "check_authentication_only_demo_path" in registered_checks,
+        "authentication-only demo contract must remain registered",
     )
 
     for plan in plans:
@@ -921,6 +977,7 @@ def main():
         check_oauth_timestamp_culture,
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
+        check_authentication_only_demo_path,
         check_oauth_callback_preflight,
         check_tweet_text_preflight,
         check_access_token_exchange_guards,

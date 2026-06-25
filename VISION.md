@@ -41,6 +41,8 @@ Priority:
 - Guard access-token exchanges when request tokens or PIN values are missing
 - Avoid exchanging PINs before a request token exists
 - Avoid posting tweets before an access token exists
+- Keep authentication-only mode as the default and require an explicit
+  Inspector opt-in before showing tweet posting controls
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context
 - Keep runtime network endpoints on HTTPS
 - Keep demo logs redacted when OAuth succeeds
@@ -51,7 +53,6 @@ Priority:
 Next priorities:
 
 - Document platform credential-store integration if persistent login is revived
-- Add a no-post demo path for authentication-only testing
 
 Contribution rules:
 

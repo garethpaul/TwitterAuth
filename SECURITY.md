@@ -26,6 +26,10 @@ Helpful reports include:
 
 - This repository appears to be a public sample, documentation, or utility project. The active security scope is the code and documentation on the default branch.
 - Review found authentication, token, or session-related code paths; changes in those areas should receive security-focused review before merge.
+- Tweet posting is disabled by default. The Demo scene exposes only the
+  authentication flow unless a developer explicitly enables
+  `ALLOW_TWEET_POSTING` in the Inspector; do not enable it with production
+  credentials or accounts during routine testing.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found mobile permission or privacy-sensitive data handling; changes in those areas should receive security-focused review before merge.
