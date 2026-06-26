@@ -1,5 +1,35 @@
 # Changes
 
+## 2026-06-26 04:31 PDT - P2 - Preserve request tokens on invalid PIN input
+
+### Summary
+
+Rejected the instructional PIN placeholder and surrounding-whitespace PIN text
+before the demo copies or clears its retained one-time request token.
+
+### Work completed
+
+- Named the PIN placeholder, added a reusable UI preflight, and kept valid PIN
+  exchange ordering unchanged.
+- Added the preflight to OAuth hardening contracts and a hostile mutation that
+  removes it.
+- Updated usage, security, roadmap, contributor, and plan guidance.
+
+### Validation
+
+- The focused hardening contract failed before implementation because no PIN
+  preflight preceded token consumption.
+- The repaired contract rejects 10 hostile mutations. Root and
+  external-directory `make check`, all 25 static checks, 30 Make authority
+  cases, generated-cache, scene, callback, and OAuth mutation suites, Python
+  compilation, and `git diff --check` pass. Unity build skips because no
+  absolute editor executable is configured; hosted checks remain merge gates.
+
+### Blockers
+
+- Live PIN OAuth still requires a compatible legacy Unity editor, test
+  credentials, provider availability, and a test account.
+
 ## 2026-06-25 11:40 PDT - P2 - Guard the serialized no-post default
 
 ### Summary

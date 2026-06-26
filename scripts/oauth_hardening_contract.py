@@ -54,4 +54,21 @@ def validation_errors(api_source, demo_source):
         if contract not in lifecycle_body:
             errors.append(f"OAuth lifecycle contract is missing: {contract}")
 
+    required_pin_contracts = (
+        'private const string PIN_PLACEHOLDER = "Please enter your PIN here.";',
+        "private string m_PIN = PIN_PLACEHOLDER;",
+        "private static bool PINIsReady(string pin)",
+        "pin != PIN_PLACEHOLDER",
+        "pin == pin.Trim()",
+        "PINIsReady(m_PIN)",
+    )
+    for contract in required_pin_contracts:
+        if contract not in demo_source:
+            errors.append(f"PIN preflight contract is missing: {contract}")
+
+    pin_guard = demo_source.find("PINIsReady(m_PIN)")
+    token_copy = demo_source.find("string requestToken = m_RequestTokenResponse.Token;")
+    if pin_guard < 0 or token_copy < 0 or pin_guard > token_copy:
+        errors.append("PIN preflight must run before request-token consumption")
+
     return errors

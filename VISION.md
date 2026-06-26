@@ -40,6 +40,7 @@ Priority:
 - Guard authorization-page launches when request tokens are missing
 - Guard access-token exchanges when request tokens or PIN values are missing
 - Avoid exchanging PINs before a request token exists
+- Preserve request tokens when PIN UI preflight rejects placeholder text
 - Avoid posting tweets before an access token exists
 - Keep authentication-only mode as the default and require an explicit
   Inspector opt-in before showing tweet posting controls

@@ -113,6 +113,11 @@ def main():
                 1,
             ),
         ),
+        (
+            "consume request token before PIN preflight",
+            api_source,
+            demo_source.replace(" &&\n                PINIsReady(m_PIN)", "", 1),
+        ),
     )
 
     for name, mutated_api, mutated_demo in mutations:
