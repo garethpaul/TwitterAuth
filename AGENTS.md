@@ -50,6 +50,7 @@
   false default.
 - Preserve single-flight post ownership and invalidate its callback generation
   when the demo component is disabled.
+- Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.
 - PIN UI preflight must reject placeholder or surrounding-whitespace text
   before clearing the retained request token.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.

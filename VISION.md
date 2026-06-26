@@ -47,6 +47,7 @@ Priority:
 - Keep the checked-in scene free of a serialized posting opt-in so source and
   scene defaults cannot drift
 - Keep explicitly enabled live posting single-flight and lifecycle-owned
+- Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context
 - Keep runtime network endpoints on HTTPS
 - Keep demo logs redacted when OAuth succeeds

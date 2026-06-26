@@ -35,6 +35,7 @@ AUTHENTICATION_ONLY_DEMO_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-dem
 AUTHENTICATION_ONLY_SCENE_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-scene-default.md"
 PIN_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-26-pin-preflight-token-preservation.md"
 POST_TWEET_OWNERSHIP_PLAN = DOCS_PLANS / "2026-06-26-post-tweet-ownership.md"
+ACCOUNT_SWITCH_POST_PLAN = DOCS_PLANS / "2026-06-26-account-switch-post-invalidation.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 KNOWN_LEAKED_CREDENTIAL_SHA256 = {
     "5f4f4ed76a7f6f581cdcb97da1c7dc2657f144af4798556452cfad4fd90f5336",
@@ -543,10 +544,11 @@ def check_post_tweet_ownership():
     errors = post_ownership_errors(read_text("UnityTwitter/Assets/Demo.cs"))
     require(not errors, "; ".join(errors))
     documentation = {
-        "README.md": "the demo owns one submission at a time",
-        "SECURITY.md": "Explicit live posting is single-flight",
-        "VISION.md": "Keep explicitly enabled live posting single-flight",
-        "CHANGES.md": "Own explicit live-post submissions",
+        "AGENTS.md": "Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.",
+        "README.md": "Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.",
+        "SECURITY.md": "Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.",
+        "VISION.md": "Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.",
+        "CHANGES.md": "Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.",
     }
     for relative_path, phrase in documentation.items():
         require(phrase in read_text(relative_path), f"{relative_path} must document post ownership")
@@ -1017,6 +1019,10 @@ def check_docs_plans():
     require(
         POST_TWEET_OWNERSHIP_PLAN in plans,
         f"{POST_TWEET_OWNERSHIP_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
+        ACCOUNT_SWITCH_POST_PLAN in plans,
+        f"{ACCOUNT_SWITCH_POST_PLAN.relative_to(ROOT)} must be present",
     )
     require(
         "check_oauth_timestamp_culture" in registered_checks,

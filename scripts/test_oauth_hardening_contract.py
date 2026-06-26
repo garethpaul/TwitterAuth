@@ -28,8 +28,7 @@ def main():
         "    {\n"
         "        m_RequestTokenGeneration++;\n"
         "        m_AccessTokenGeneration++;\n"
-        "        m_PostTweetGeneration++;\n"
-        "        m_PostTweetInFlight = false;\n"
+        "        InvalidatePostTweetOwnership();\n"
         "        m_RequestTokenResponse = null;\n"
         "    }\n"
     )

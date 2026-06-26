@@ -90,6 +90,7 @@ public class Demo : MonoBehaviour
 
             if (GUI.Button(rect, text))
             {
+                InvalidatePostTweetOwnership();
                 m_RequestTokenResponse = null;
                 m_AccessTokenResponse = new AccessTokenResponse();
                 m_AccessTokenGeneration++;
@@ -191,12 +192,17 @@ public class Demo : MonoBehaviour
                pin == pin.Trim();
     }
 
+    private void InvalidatePostTweetOwnership()
+    {
+        m_PostTweetGeneration++;
+        m_PostTweetInFlight = false;
+    }
+
     private void OnDisable()
     {
         m_RequestTokenGeneration++;
         m_AccessTokenGeneration++;
-        m_PostTweetGeneration++;
-        m_PostTweetInFlight = false;
+        InvalidatePostTweetOwnership();
         m_RequestTokenResponse = null;
     }
 
