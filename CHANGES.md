@@ -1,5 +1,39 @@
 # Changes
 
+## 2026-06-26 04:42 PDT - P1 - Own explicit live-post submissions
+
+### Summary
+
+Prevented rapid `Post Tweet` clicks from starting concurrent irreversible
+submissions and prevented disabled demo components from accepting stale post
+completions.
+
+### Work completed
+
+- Added a single in-flight post owner and monotonically increasing generation.
+- Bound each completion to its captured generation and released ownership only
+  for the current request.
+- Invalidated pending completions and cleared local ownership on disable.
+- Added a focused portable contract, eight hostile mutations, public gate
+  wiring, synchronized guidance, and a completed implementation plan.
+
+### Validation
+
+- The focused contract failed before the in-flight owner, generation binding,
+  and lifecycle invalidation existed.
+- Root and external-directory `make check` pass all 26 static checks, 30 Make
+  authority cases, eight post-ownership mutations, and the existing cache,
+  scene, callback, and OAuth mutation suites. Python compilation, shell syntax,
+  and `git diff --check` also pass.
+- Hosted validation remains a merge gate for the exact PR head; Unity live
+  posting is intentionally not exercised without a safe test account and
+  compatible editor.
+
+### Blockers
+
+- The retired provider flow cannot be verified locally without legacy Unity,
+  explicit credentials, provider availability, and a dedicated test account.
+
 ## 2026-06-26 04:31 PDT - P2 - Preserve request tokens on invalid PIN input
 
 ### Summary

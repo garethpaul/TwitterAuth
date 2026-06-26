@@ -37,6 +37,8 @@ public class Demo : MonoBehaviour
 
     private AccessTokenResponse m_AccessTokenResponse;
     private int m_AccessTokenGeneration;
+    private int m_PostTweetGeneration;
+    private bool m_PostTweetInFlight;
 
     private string m_PIN = PIN_PLACEHOLDER;
     private int m_RequestTokenGeneration;
@@ -153,12 +155,18 @@ public class Demo : MonoBehaviour
 
         if (GUI.Button(rect, "Post Tweet"))
         {
-            if (m_AccessTokenResponse != null &&
+            if (m_PostTweetInFlight)
+            {
+                print("OnPostTweet - skipped. A post is already in progress.");
+            }
+            else if (m_AccessTokenResponse != null &&
                 !string.IsNullOrEmpty(m_AccessTokenResponse.Token) &&
                 !string.IsNullOrEmpty(m_AccessTokenResponse.TokenSecret))
             {
+                int postTweetGeneration = ++m_PostTweetGeneration;
+                m_PostTweetInFlight = true;
                 StartCoroutine(API.PostTweet(m_Tweet, CONSUMER_KEY, CONSUMER_SECRET, m_AccessTokenResponse,
-                    OnPostTweet));
+                    success => OnPostTweet(postTweetGeneration, success)));
             }
             else
             {
@@ -187,6 +195,8 @@ public class Demo : MonoBehaviour
     {
         m_RequestTokenGeneration++;
         m_AccessTokenGeneration++;
+        m_PostTweetGeneration++;
+        m_PostTweetInFlight = false;
         m_RequestTokenResponse = null;
     }
 
@@ -240,8 +250,14 @@ public class Demo : MonoBehaviour
         }
     }
 
-    private void OnPostTweet(bool success)
+    private void OnPostTweet(int postTweetGeneration, bool success)
     {
+        if (postTweetGeneration != m_PostTweetGeneration)
+        {
+            return;
+        }
+
+        m_PostTweetInFlight = false;
         print("OnPostTweet - " + (success ? "succedded." : "failed."));
     }
 }

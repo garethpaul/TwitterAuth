@@ -33,6 +33,8 @@ Helpful reports include:
 - The checked-in binary scene omits the posting opt-in field. Static mutation
   coverage rejects a scene that begins serializing that field, preventing a
   committed Inspector value from silently changing the repository default.
+- Explicit live posting is single-flight. Repeated clicks cannot start a second
+  submission, and disabling the component invalidates the pending completion.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found mobile permission or privacy-sensitive data handling; changes in those areas should receive security-focused review before merge.
