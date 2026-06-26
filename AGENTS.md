@@ -48,6 +48,8 @@
 - Do not serialize `ALLOW_TWEET_POSTING` into the checked-in scene. The legacy
   binary scene must omit the field so fresh checkouts retain the source-level
   false default.
+- PIN UI preflight must reject placeholder or surrounding-whitespace text
+  before clearing the retained request token.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-twitterauth-baseline.md` for the current static verification baseline.

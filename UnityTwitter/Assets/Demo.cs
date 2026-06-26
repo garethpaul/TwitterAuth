@@ -10,6 +10,7 @@ public class Demo : MonoBehaviour
     private const string PLAYER_PREFS_TWITTER_USER_SCREEN_NAME = "TwitterUserScreenName";
     private const string PLAYER_PREFS_TWITTER_USER_TOKEN = "TwitterUserToken";
     private const string PLAYER_PREFS_TWITTER_USER_TOKEN_SECRET = "TwitterUserTokenSecret";
+    private const string PIN_PLACEHOLDER = "Please enter your PIN here.";
     public bool ALLOW_TWEET_POSTING;
     public string CONSUMER_KEY;
     public string CONSUMER_SECRET;
@@ -37,7 +38,7 @@ public class Demo : MonoBehaviour
     private AccessTokenResponse m_AccessTokenResponse;
     private int m_AccessTokenGeneration;
 
-    private string m_PIN = "Please enter your PIN here.";
+    private string m_PIN = PIN_PLACEHOLDER;
     private int m_RequestTokenGeneration;
     private RequestTokenResponse m_RequestTokenResponse;
     private string m_Tweet = "Please enter your tweet here.";
@@ -112,7 +113,9 @@ public class Demo : MonoBehaviour
 
         if (GUI.Button(rect, "Enter PIN"))
         {
-            if (m_RequestTokenResponse != null && !string.IsNullOrEmpty(m_RequestTokenResponse.Token))
+            if (m_RequestTokenResponse != null &&
+                !string.IsNullOrEmpty(m_RequestTokenResponse.Token) &&
+                PINIsReady(m_PIN))
             {
                 string requestToken = m_RequestTokenResponse.Token;
                 m_RequestTokenResponse = null;
@@ -124,7 +127,7 @@ public class Demo : MonoBehaviour
             }
             else
             {
-                print("OnAccessTokenCallback - skipped. Request token is missing.");
+                print("OnAccessTokenCallback - skipped. Request token or PIN is missing.");
             }
         }
 
@@ -171,6 +174,13 @@ public class Demo : MonoBehaviour
         PlayerPrefs.DeleteKey(PLAYER_PREFS_TWITTER_USER_TOKEN);
         PlayerPrefs.DeleteKey(PLAYER_PREFS_TWITTER_USER_TOKEN_SECRET);
         PlayerPrefs.Save();
+    }
+
+    private static bool PINIsReady(string pin)
+    {
+        return !string.IsNullOrEmpty(pin) &&
+               pin != PIN_PLACEHOLDER &&
+               pin == pin.Trim();
     }
 
     private void OnDisable()

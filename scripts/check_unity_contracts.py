@@ -32,6 +32,7 @@ WHITESPACE_TWEET_PLAN = DOCS_PLANS / "2026-06-16-whitespace-tweet-preflight.md"
 CALLBACK_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-17-oauth-callback-preflight.md"
 AUTHENTICATION_ONLY_DEMO_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-demo.md"
 AUTHENTICATION_ONLY_SCENE_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-scene-default.md"
+PIN_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-26-pin-preflight-token-preservation.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 KNOWN_LEAKED_CREDENTIAL_SHA256 = {
     "5f4f4ed76a7f6f581cdcb97da1c7dc2657f144af4798556452cfad4fd90f5336",
@@ -405,8 +406,17 @@ def check_demo_access_flow_guards():
         "PIN submission must guard missing request-token state",
     )
     require(
-        "Request token is missing" in demo,
-        "PIN submission guard must explain missing request-token state",
+        "Request token or PIN is missing" in demo,
+        "PIN submission guard must explain missing request-token or PIN state",
+    )
+    pin_preflight = demo.index("PINIsReady(m_PIN)")
+    token_copy = demo.index("string requestToken = m_RequestTokenResponse.Token;")
+    require(
+        pin_preflight < token_copy and
+        'private const string PIN_PLACEHOLDER = "Please enter your PIN here.";' in demo and
+        "pin != PIN_PLACEHOLDER" in demo and
+        "pin == pin.Trim()" in demo,
+        "placeholder and surrounding-whitespace PINs must be rejected before request-token consumption",
     )
     require(
         "m_AccessTokenResponse != null" in demo,
@@ -987,6 +997,7 @@ def check_docs_plans():
         AUTHENTICATION_ONLY_SCENE_PLAN in plans,
         f"{AUTHENTICATION_ONLY_SCENE_PLAN.relative_to(ROOT)} must be present",
     )
+    require(PIN_PREFLIGHT_PLAN in plans, f"{PIN_PREFLIGHT_PLAN.relative_to(ROOT)} must be present")
     require(
         "check_oauth_timestamp_culture" in registered_checks,
         "OAuth timestamp culture contract must remain registered",

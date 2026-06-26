@@ -46,6 +46,8 @@ Helpful reports include:
 - OAuth credentials, request tokens, PINs, and access-token fields reject
   whitespace-only or surrounding-whitespace values before signing, provider
   requests, or browser launch.
+- Invalid UI PIN text, including the instructional placeholder, must not consume
+  the retained request token before exchange preflight succeeds.
 - Tweet text rejects null, empty, whitespace-only, and over-limit values before
   OAuth signing or network construction without rewriting valid content.
 - OAuth token and account-identity response fields must occur exactly once;

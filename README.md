@@ -74,6 +74,8 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - OAuth signing and browser authorization reject null, empty, whitespace-only,
   and surrounding-whitespace credentials, request tokens, PINs, and
   access-token fields through the existing redacted failure callbacks.
+- The demo rejects its instructional PIN placeholder and surrounding whitespace
+  before consuming the retained one-time request token.
 - Public OAuth and posting coroutines reject missing callbacks before
   credentials, signing, or network work.
 - Tweet text rejects null, empty, whitespace-only, and over-limit values before
