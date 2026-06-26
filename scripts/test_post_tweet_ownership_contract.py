@@ -68,17 +68,44 @@ def main():
             ),
         ),
         (
-            "accept callback after disable",
-            source.replace("        m_PostTweetGeneration++;\n", "", 1),
-        ),
-        (
-            "retain ownership after disable",
+            "remove post invalidation helper",
             source.replace(
+                "    private void InvalidatePostTweetOwnership()\n"
+                "    {\n"
                 "        m_PostTweetGeneration++;\n"
                 "        m_PostTweetInFlight = false;\n"
+                "    }\n\n",
+                "",
+                1,
+            ),
+        ),
+        (
+            "accept callback after disable",
+            source.replace(
+                "        InvalidatePostTweetOwnership();\n"
                 "        m_RequestTokenResponse = null;",
-                "        m_PostTweetGeneration++;\n"
                 "        m_RequestTokenResponse = null;",
+                1,
+            ),
+        ),
+        (
+            "accept callback after account switch",
+            source.replace(
+                "                InvalidatePostTweetOwnership();\n"
+                "                m_RequestTokenResponse = null;",
+                "                m_RequestTokenResponse = null;",
+                1,
+            ),
+        ),
+        (
+            "invalidate account switch after OAuth reset",
+            source.replace(
+                "                InvalidatePostTweetOwnership();\n"
+                "                m_RequestTokenResponse = null;\n"
+                "                m_AccessTokenResponse = new AccessTokenResponse();",
+                "                m_RequestTokenResponse = null;\n"
+                "                m_AccessTokenResponse = new AccessTokenResponse();\n"
+                "                InvalidatePostTweetOwnership();",
                 1,
             ),
         ),

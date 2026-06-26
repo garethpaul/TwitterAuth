@@ -1,5 +1,67 @@
 # Changes
 
+## 2026-06-26 13:20 PDT - P1 - Invalidate prior-account post completions
+
+### Summary
+
+Bound replacement authentication to the existing live-post lifecycle so a
+completion from the prior account cannot remain current after OAuth state is
+cleared and a different account flow begins.
+
+### Work completed
+
+- Added one shared post-ownership invalidation helper for generation advance
+  and local in-flight release.
+- Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.
+- Reused the same helper when the demo component is disabled.
+- Expanded the focused contract from eight to ten hostile mutations, covering
+  missing account-switch invalidation and incorrect ordering.
+
+### Threads
+
+- Started: none; the focused lifecycle correction was handled directly.
+- Continued: none.
+- Stopped: none.
+
+### Files changed
+
+- `UnityTwitter/Assets/Demo.cs` — invalidate post ownership before replacement
+  OAuth state and share the disable lifecycle helper.
+- `scripts/post_tweet_ownership_contract.py` and
+  `scripts/test_post_tweet_ownership_contract.py` — enforce the helper and both
+  lifecycle call sites.
+- Guidance and plan files — document the account-switch boundary and runtime
+  limit for already transmitted provider requests.
+
+### Validation
+
+- Red-first focused suite failed on the missing helper, missing account-switch
+  ordering, and missing disable reuse.
+- The repaired focused suite rejected ten hostile mutations.
+- All six Make aliases passed from the repository root and an external
+  directory: 26 canonical checks, 30 Make authority cases, ten post-ownership
+  mutations, ten OAuth hardening mutations, six callback mutations, four cache
+  mutations, and one scene mutation.
+- The unrelated OAuth lifecycle mutation fixture was updated to the shared
+  invalidation helper shape after the first full gate exposed its stale block.
+- Unity build remains skipped without an absolute legacy editor executable.
+
+### Bugs / findings
+
+- P1 lifecycle correctness: clicking “register with a different Twitter
+  account” replaced token state without invalidating the prior account's post
+  generation, allowing its completion to be accepted afterward.
+
+### Blockers
+
+- A provider request already transmitted cannot be revoked by this local
+  generation guard; the fix prevents stale completion ownership and reporting.
+
+### Next action
+
+- Run final audits, hosted checks, and exact-head review, then merge only the
+  unchanged green PR head.
+
 ## 2026-06-26 04:42 PDT - P1 - Own explicit live-post submissions
 
 ### Summary

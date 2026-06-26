@@ -35,6 +35,7 @@ Helpful reports include:
   committed Inspector value from silently changing the repository default.
 - Explicit live posting is single-flight. Repeated clicks cannot start a second
   submission, and disabling the component invalidates the pending completion.
+- Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
 - Review found network clients, sockets, web APIs, or service endpoints; changes in those areas should receive security-focused review before merge.
 - Review found mobile permission or privacy-sensitive data handling; changes in those areas should receive security-focused review before merge.

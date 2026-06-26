@@ -10,6 +10,7 @@ def validation_errors(demo_source):
     for contract in (
         "private int m_PostTweetGeneration;",
         "private bool m_PostTweetInFlight;",
+        "private void InvalidatePostTweetOwnership()",
         "private void OnPostTweet(int postTweetGeneration, bool success)",
     ):
         if contract not in demo_source:
@@ -37,15 +38,47 @@ def validation_errors(demo_source):
     elif button_positions != sorted(button_positions):
         errors.append("Post Tweet ownership must be published before starting the coroutine")
 
+    invalidate_match = re.search(
+        r"private void InvalidatePostTweetOwnership\(\)\s*\{(?P<body>.*?)\n\s*\}",
+        demo_source,
+        re.DOTALL,
+    )
+    invalidate_body = invalidate_match.group("body") if invalidate_match else ""
+    for contract in ("m_PostTweetGeneration++;", "m_PostTweetInFlight = false;"):
+        if contract not in invalidate_body:
+            errors.append(f"post invalidation helper is missing: {contract}")
+
+    replacement_end = demo_source.find("// PIN Input")
+    replacement_start = demo_source.rfind(
+        'if (GUI.Button(rect, text))',
+        0,
+        replacement_end,
+    )
+    replacement_body = (
+        demo_source[replacement_start:replacement_end]
+        if replacement_start >= 0 and replacement_end > replacement_start
+        else ""
+    )
+    replacement_contracts = (
+        "InvalidatePostTweetOwnership();",
+        "m_RequestTokenResponse = null;",
+        "m_AccessTokenResponse = new AccessTokenResponse();",
+        "StartCoroutine(API.GetRequestToken(",
+    )
+    replacement_positions = [replacement_body.find(contract) for contract in replacement_contracts]
+    if any(position < 0 for position in replacement_positions):
+        errors.append("replacement authentication must invalidate prior post ownership")
+    elif replacement_positions != sorted(replacement_positions):
+        errors.append("replacement authentication must invalidate posts before replacing OAuth state")
+
     disable_match = re.search(
         r"private void OnDisable\(\)\s*\{(?P<body>.*?)\n\s*\}",
         demo_source,
         re.DOTALL,
     )
     disable_body = disable_match.group("body") if disable_match else ""
-    for contract in ("m_PostTweetGeneration++;", "m_PostTweetInFlight = false;"):
-        if contract not in disable_body:
-            errors.append(f"post lifecycle contract is missing: {contract}")
+    if "InvalidatePostTweetOwnership();" not in disable_body:
+        errors.append("component disable must invalidate post ownership through the shared helper")
 
     completion_start = demo_source.find(
         "private void OnPostTweet(int postTweetGeneration, bool success)"

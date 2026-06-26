@@ -74,6 +74,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - When live posting is enabled, the demo owns one submission at a time, rejects
   repeated clicks while it is in flight, and ignores completion callbacks after
   the component is disabled.
+- Starting replacement authentication invalidates the prior account's post completion before OAuth state is cleared.
 - OAuth signing and browser authorization reject null, empty, whitespace-only,
   and surrounding-whitespace credentials, request tokens, PINs, and
   access-token fields through the existing redacted failure callbacks.
