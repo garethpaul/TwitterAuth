@@ -10,6 +10,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 from oauth_callback_preflight_contract import validation_errors as callback_preflight_errors
+from post_tweet_ownership_contract import validation_errors as post_ownership_errors
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +34,7 @@ CALLBACK_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-17-oauth-callback-preflight.md"
 AUTHENTICATION_ONLY_DEMO_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-demo.md"
 AUTHENTICATION_ONLY_SCENE_PLAN = DOCS_PLANS / "2026-06-25-authentication-only-scene-default.md"
 PIN_PREFLIGHT_PLAN = DOCS_PLANS / "2026-06-26-pin-preflight-token-preservation.md"
+POST_TWEET_OWNERSHIP_PLAN = DOCS_PLANS / "2026-06-26-post-tweet-ownership.md"
 CI_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 KNOWN_LEAKED_CREDENTIAL_SHA256 = {
     "5f4f4ed76a7f6f581cdcb97da1c7dc2657f144af4798556452cfad4fd90f5336",
@@ -87,6 +89,7 @@ def check_required_project_files():
         "UnityTwitter/ProjectSettings/ProjectSettings.asset",
         ".github/workflows/check.yml",
         "scripts/test_authentication_only_scene_contract.py",
+        "scripts/test_post_tweet_ownership_contract.py",
         "docs/readme-overview.svg",
         "docs/bugs/p2-plain-http-runtime-endpoint-af8489704cbb4afe.md",
     ]:
@@ -534,6 +537,19 @@ def check_authentication_only_demo_path():
     for relative_path, (text, fragments) in documentation_contracts.items():
         for fragment in fragments:
             require(fragment in text, f"{relative_path} must document authentication-only mode")
+
+
+def check_post_tweet_ownership():
+    errors = post_ownership_errors(read_text("UnityTwitter/Assets/Demo.cs"))
+    require(not errors, "; ".join(errors))
+    documentation = {
+        "README.md": "the demo owns one submission at a time",
+        "SECURITY.md": "Explicit live posting is single-flight",
+        "VISION.md": "Keep explicitly enabled live posting single-flight",
+        "CHANGES.md": "Own explicit live-post submissions",
+    }
+    for relative_path, phrase in documentation.items():
+        require(phrase in read_text(relative_path), f"{relative_path} must document post ownership")
 
 
 def check_tweet_text_preflight():
@@ -999,6 +1015,10 @@ def check_docs_plans():
     )
     require(PIN_PREFLIGHT_PLAN in plans, f"{PIN_PREFLIGHT_PLAN.relative_to(ROOT)} must be present")
     require(
+        POST_TWEET_OWNERSHIP_PLAN in plans,
+        f"{POST_TWEET_OWNERSHIP_PLAN.relative_to(ROOT)} must be present",
+    )
+    require(
         "check_oauth_timestamp_culture" in registered_checks,
         "OAuth timestamp culture contract must remain registered",
     )
@@ -1013,6 +1033,10 @@ def check_docs_plans():
     require(
         "check_authentication_only_demo_path" in registered_checks,
         "authentication-only demo contract must remain registered",
+    )
+    require(
+        "check_post_tweet_ownership" in registered_checks,
+        "Post Tweet ownership contract must remain registered",
     )
 
     for plan in plans:
@@ -1040,6 +1064,7 @@ def main():
         check_authorization_url_token_safety,
         check_demo_access_flow_guards,
         check_authentication_only_demo_path,
+        check_post_tweet_ownership,
         check_oauth_callback_preflight,
         check_tweet_text_preflight,
         check_access_token_exchange_guards,

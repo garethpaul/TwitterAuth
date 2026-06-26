@@ -46,6 +46,7 @@ Priority:
   Inspector opt-in before showing tweet posting controls
 - Keep the checked-in scene free of a serialized posting opt-in so source and
   scene defaults cannot drift
+- Keep explicitly enabled live posting single-flight and lifecycle-owned
 - Treat legacy Unity `WWW` and Twitter API assumptions as historical context
 - Keep runtime network endpoints on HTTPS
 - Keep demo logs redacted when OAuth succeeds

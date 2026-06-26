@@ -48,6 +48,8 @@
 - Do not serialize `ALLOW_TWEET_POSTING` into the checked-in scene. The legacy
   binary scene must omit the field so fresh checkouts retain the source-level
   false default.
+- Preserve single-flight post ownership and invalidate its callback generation
+  when the demo component is disabled.
 - PIN UI preflight must reject placeholder or surrounding-whitespace text
   before clearing the retained request token.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
@@ -59,6 +61,8 @@
   no-post demo path and explicit live-post Inspector opt-in.
 - See `docs/plans/2026-06-25-authentication-only-scene-default.md` for the
   binary-scene serialization guard.
+- See `docs/plans/2026-06-26-post-tweet-ownership.md` for live-post single-flight
+  and callback-generation ownership.
 
 ## Agent workflow
 

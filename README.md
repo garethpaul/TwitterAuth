@@ -71,6 +71,9 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 - Leave `ALLOW_TWEET_POSTING` disabled for authentication-only testing. Enable
   it explicitly on the Demo object only when live posting is intended and
   safe to exercise.
+- When live posting is enabled, the demo owns one submission at a time, rejects
+  repeated clicks while it is in flight, and ignores completion callbacks after
+  the component is disabled.
 - OAuth signing and browser authorization reject null, empty, whitespace-only,
   and surrounding-whitespace credentials, request tokens, PINs, and
   access-token fields through the existing redacted failure callbacks.
