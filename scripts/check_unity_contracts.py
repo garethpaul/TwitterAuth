@@ -9,6 +9,7 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
+from authentication_only_contract import validation_errors as authentication_only_errors
 from oauth_callback_preflight_contract import validation_errors as callback_preflight_errors
 from post_tweet_ownership_contract import validation_errors as post_ownership_errors
 
@@ -453,7 +454,6 @@ def check_demo_access_flow_guards():
 
 
 def check_authentication_only_demo_path():
-    demo = read_text("UnityTwitter/Assets/Demo.cs")
     scene = (ROOT / "UnityTwitter/Assets/Demo.unity").read_bytes()
     makefile = read_text("Makefile")
     readme = read_text("README.md")
@@ -461,14 +461,15 @@ def check_authentication_only_demo_path():
     vision = read_text("VISION.md")
     agents = read_text("AGENTS.md")
     changes = read_text("CHANGES.md")
-    require(
-        "public bool ALLOW_TWEET_POSTING;" in demo,
-        "tweet posting must require an explicit Inspector opt-in",
-    )
-    require(
-        "public bool ALLOW_TWEET_POSTING = true;" not in demo,
-        "tweet posting must remain disabled by default",
-    )
+
+    # The Demo.cs source contract lives in authentication_only_contract.py so that
+    # scripts/test_authentication_only_demo_contract.py exercises this exact code
+    # rather than a copy of it. It asserts against comment-blanked source: tweet
+    # posting being off by default is a security posture, and raw-text assertions
+    # cannot tell a live guard from a commented-out one.
+    errors = authentication_only_errors(read_text("UnityTwitter/Assets/Demo.cs"))
+    require(not errors, "; ".join(errors))
+
     require(
         demo_scene_posting_is_disabled(scene),
         "Demo.unity must omit a serialized tweet-posting opt-in",
@@ -477,26 +478,13 @@ def check_authentication_only_demo_path():
         "scripts/test_authentication_only_scene_contract.py" in makefile,
         "make test must run the authentication-only scene mutation",
     )
-
-    match = re.search(
-        r"private void OnGUI\(\)\s*\{(?P<body>.*?)\n    \}\n\n    private void ClearLegacyStoredCredentials",
-        demo,
-        re.DOTALL,
-    )
-    require(match, "Demo.OnGUI must remain available for authentication-only verification")
-    body = match.group("body")
-    ordered_fragments = [
-        'GUI.Button(rect, "Enter PIN")',
-        "if (!ALLOW_TWEET_POSTING)",
-        'GUI.Label(rect, "Authentication-only mode. Tweet posting is disabled.")',
-        "return;",
-        "m_Tweet = GUI.TextField(rect, m_Tweet);",
-        "API.PostTweet(",
-    ]
-    positions = [body.find(fragment) for fragment in ordered_fragments]
     require(
-        all(position >= 0 for position in positions) and positions == sorted(positions),
-        "authentication-only mode must stop before tweet input and posting",
+        "scripts/test_authentication_only_demo_contract.py" in makefile,
+        "make test must run the authentication-only demo mutation",
+    )
+    require(
+        "scripts/test_csharp_source.py" in makefile,
+        "make test must run the C# comment scanner tests",
     )
     documentation_contracts = {
         "README.md": (
