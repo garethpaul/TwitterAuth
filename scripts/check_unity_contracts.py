@@ -297,7 +297,16 @@ def check_oauth_response_field_parsing():
     # (and `return string.Empty;` still appears 3x elsewhere), so FormValue stops rejecting
     # duplicate oauth_token keys with the gate green. Contiguous-literal form as used by
     # POSTING_GUARD in test_authentication_only_demo_contract.
+    #
+    # The pin must also be ANCHORED to the statement it follows. Pinning the guard alone is
+    # still defeated by wrapping it: `if (false) {` + the guard verbatim + `}` keeps the pinned
+    # literal byte-for-byte intact while the guard never runs. Anchoring to the Regex.Matches
+    # call means any wrapper inserted before the guard breaks the literal.
     duplicate_key_guard = (
+        "            MatchCollection matches = Regex.Matches(\n"
+        "                form,\n"
+        '                @"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)"\n'
+        "            );\n"
         "            if (matches.Count != 1)\n"
         "            {\n"
         "                return string.Empty;\n"
