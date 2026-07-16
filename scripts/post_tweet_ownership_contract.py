@@ -3,9 +3,18 @@
 
 import re
 
+from csharp_source import blank_comments
+
 
 def validation_errors(demo_source):
     errors = []
+
+    # Code contracts assert comment-blanked source: commenting a guard out
+    # preserves every asserted literal verbatim, so a raw-text assertion would
+    # stay green while the guard is dead code. `blank_comments` preserves byte
+    # offsets, so the `// PIN Input` section marker located in the raw source
+    # below still indexes into this text correctly.
+    demo = blank_comments(demo_source)
 
     for contract in (
         "private int m_PostTweetGeneration;",
@@ -13,16 +22,16 @@ def validation_errors(demo_source):
         "private void InvalidatePostTweetOwnership()",
         "private void OnPostTweet(int postTweetGeneration, bool success)",
     ):
-        if contract not in demo_source:
+        if contract not in demo:
             errors.append(f"post ownership contract is missing: {contract}")
 
-    button_start = demo_source.find('if (GUI.Button(rect, "Post Tweet"))')
-    button_end = demo_source.find("private void ClearLegacyStoredCredentials()")
+    button_start = demo.find('if (GUI.Button(rect, "Post Tweet"))')
+    button_end = demo.find("private void ClearLegacyStoredCredentials()")
     if button_start < 0 or button_end < 0 or button_start >= button_end:
         errors.append("post ownership contract cannot locate the Post Tweet handler")
         button_body = ""
     else:
-        button_body = demo_source[button_start:button_end]
+        button_body = demo[button_start:button_end]
 
     ordered_button_contracts = (
         "if (m_PostTweetInFlight)",
@@ -40,7 +49,7 @@ def validation_errors(demo_source):
 
     invalidate_match = re.search(
         r"private void InvalidatePostTweetOwnership\(\)\s*\{(?P<body>.*?)\n\s*\}",
-        demo_source,
+        demo,
         re.DOTALL,
     )
     invalidate_body = invalidate_match.group("body") if invalidate_match else ""
@@ -49,13 +58,13 @@ def validation_errors(demo_source):
             errors.append(f"post invalidation helper is missing: {contract}")
 
     replacement_end = demo_source.find("// PIN Input")
-    replacement_start = demo_source.rfind(
+    replacement_start = demo.rfind(
         'if (GUI.Button(rect, text))',
         0,
         replacement_end,
     )
     replacement_body = (
-        demo_source[replacement_start:replacement_end]
+        demo[replacement_start:replacement_end]
         if replacement_start >= 0 and replacement_end > replacement_start
         else ""
     )
@@ -73,20 +82,20 @@ def validation_errors(demo_source):
 
     disable_match = re.search(
         r"private void OnDisable\(\)\s*\{(?P<body>.*?)\n\s*\}",
-        demo_source,
+        demo,
         re.DOTALL,
     )
     disable_body = disable_match.group("body") if disable_match else ""
     if "InvalidatePostTweetOwnership();" not in disable_body:
         errors.append("component disable must invalidate post ownership through the shared helper")
 
-    completion_start = demo_source.find(
+    completion_start = demo.find(
         "private void OnPostTweet(int postTweetGeneration, bool success)"
     )
     if completion_start < 0:
         completion_body = ""
     else:
-        completion_body = demo_source[completion_start:]
+        completion_body = demo[completion_start:]
 
     stale_guard = (
         "if (postTweetGeneration != m_PostTweetGeneration)\n"

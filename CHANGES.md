@@ -1,5 +1,74 @@
 # Changes
 
+## 2026-07-16 - P2 - Make the C# source contracts comment-aware
+
+### Summary
+
+The static contracts asserted raw C# source text, so commenting a guard out kept
+every asserted literal present verbatim and left the contract green while the
+guard became dead code. The authentication-only posting guard was fully exposed:
+`make check` passed with the guard commented out in either C# comment form.
+
+This is a verification gap, not a live defect. The checked-in C# is unchanged and
+was correct before and after; what changed is that the gate can now detect a
+commented-out guard.
+
+### Work completed
+
+- Added `scripts/csharp_source.py` with `blank_comments`, a scanner that tracks
+  regular, verbatim (`@""`), and interpolated (`$"`) string literals, character
+  literals, and escapes. Comments are blanked to spaces, so byte offsets are
+  preserved and contracts that locate a `// PIN Input` style section marker in
+  raw source still index correctly. A regex or `line.split("//")[0]` stripper
+  was rejected: it truncates `Application.OpenURL("https://dev.twitter.com/apps/new")`
+  and would fail correct source.
+- Moved the Demo.cs authentication-only assertions into
+  `scripts/authentication_only_contract.py` so the mutation test exercises the
+  shipped contract rather than a copy of it.
+- Made `scripts/post_tweet_ownership_contract.py` assert comment-blanked source
+  while still locating the `// PIN Input` marker in raw source.
+- Scoped deliberately: checks that assert prose or comment text keep reading raw
+  source.
+
+### Files changed
+
+- `scripts/csharp_source.py` and `scripts/test_csharp_source.py` — the scanner
+  and its 25 executable cases.
+- `scripts/authentication_only_contract.py` and
+  `scripts/test_authentication_only_demo_contract.py` — the extracted contract
+  and seven hostile mutations, including both comment forms.
+- `scripts/check_unity_contracts.py` — delegate the Demo.cs authentication-only
+  assertions to the shared contract.
+- `scripts/post_tweet_ownership_contract.py` and
+  `scripts/test_post_tweet_ownership_contract.py` — comment-aware assertions and
+  four added comment-form mutations (ten to fourteen).
+- `Makefile` — run the two new suites from `make test`.
+
+### Validation
+
+- Measured before the fix, with each mutation's application verified on disk:
+  block-commenting and line-commenting the `if (!ALLOW_TWEET_POSTING)` guard both
+  left `make check` green (exit 0); deleting the same guard was caught. That
+  control discrimination proves the contract was live but comment-blind.
+- Block-commenting the `OnPostTweet` stale-generation guard left the contract
+  itself green; `make check` failed only because the test harness noticed its own
+  exact-whitespace mutation no longer applied, which is an incidental catch and
+  not detection.
+- Block-commenting `InvalidatePostTweetOwnership();` in `OnDisable` was a second
+  measured blind spot in the post-ownership contract.
+- Two of the four added post-ownership mutations were measured green against the
+  previous raw-source contract; the other two were already rejected, but only
+  incidentally, because line comments shift asserted indentation and dropping
+  `else` removes an asserted literal.
+- After the fix all six probes are rejected by the contract with a real
+  diagnostic.
+- `make check` passes: 26 canonical checks, 30 Make authority cases, 25 comment
+  scanner cases, seven authentication-only demo mutations, fourteen
+  post-ownership mutations, ten OAuth hardening mutations, six callback
+  mutations, four cache mutations, and one scene mutation.
+- Not verified: no .NET toolchain was available, so no mutation was compiled. The
+  Unity build step remains skipped.
+
 ## 2026-06-26 13:20 PDT - P1 - Invalidate prior-account post completions
 
 ### Summary
