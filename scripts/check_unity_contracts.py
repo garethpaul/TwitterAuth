@@ -292,7 +292,21 @@ def check_oauth_response_field_parsing():
         '@"(?:^|&)" + Regex.Escape(key) + @"=([^&]*)"' in api,
         "OAuth response parser must match exact form field names",
     )
-    require("if (matches.Count != 1)" in api, "OAuth response fields must occur exactly once")
+    # Pin the whole guard, not just its condition. Asserting the condition alone leaves the
+    # body free: commenting out only `return string.Empty;` keeps this literal byte-identical
+    # (and `return string.Empty;` still appears 3x elsewhere), so FormValue stops rejecting
+    # duplicate oauth_token keys with the gate green. Contiguous-literal form as used by
+    # POSTING_GUARD in test_authentication_only_demo_contract.
+    duplicate_key_guard = (
+        "            if (matches.Count != 1)\n"
+        "            {\n"
+        "                return string.Empty;\n"
+        "            }"
+    )
+    require(
+        duplicate_key_guard in api,
+        "OAuth response fields must occur exactly once",
+    )
     require(
         "TryDecodeFormComponent(matches[0].Groups[1].Value, out decodedValue)" in api,
         "OAuth response parser must decode form values through the strict helper",

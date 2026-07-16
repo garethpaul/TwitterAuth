@@ -66,6 +66,24 @@ def validation_errors(api_source, demo_source):
         if contract not in demo_source:
             errors.append(f"PIN preflight contract is missing: {contract}")
 
+    # The fragments above prove the conditions are present, never that they decide
+    # anything. Binding them to a dead local and returning true keeps every fragment
+    # byte-identical and uncommented while PINIsReady always accepts, so comment
+    # stripping cannot reach it. Pin the body as one construct, in the same
+    # contiguous-literal form as POSTING_GUARD in test_authentication_only_demo_contract.
+    pin_ready_body = (
+        "    private static bool PINIsReady(string pin)\n"
+        "    {\n"
+        "        return !string.IsNullOrEmpty(pin) &&\n"
+        "               pin != PIN_PLACEHOLDER &&\n"
+        "               pin == pin.Trim();\n"
+        "    }"
+    )
+    if pin_ready_body not in demo_source:
+        errors.append(
+            "PINIsReady must return the PIN preflight decision directly from its conditions"
+        )
+
     pin_guard = demo_source.find("PINIsReady(m_PIN)")
     token_copy = demo_source.find("string requestToken = m_RequestTokenResponse.Token;")
     if pin_guard < 0 or token_copy < 0 or pin_guard > token_copy:

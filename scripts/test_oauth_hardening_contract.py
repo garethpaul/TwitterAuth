@@ -34,6 +34,23 @@ def main():
     )
     mutations = (
         (
+            # Every asserted fragment stays byte-identical and uncommented; PINIsReady just
+            # stops deciding. Fragment-presence assertions and comment stripping both miss
+            # this, so only the whole-body pin rejects it.
+            "neuter PIN preflight into a dead local",
+            api_source,
+            demo_source.replace(
+                "        return !string.IsNullOrEmpty(pin) &&\n"
+                "               pin != PIN_PLACEHOLDER &&\n"
+                "               pin == pin.Trim();",
+                "        bool ready = !string.IsNullOrEmpty(pin) &&\n"
+                "               pin != PIN_PLACEHOLDER &&\n"
+                "               pin == pin.Trim();\n"
+                "        return true;",
+                1,
+            ),
+        ),
+        (
             "accept malformed percent escapes",
             api_source.replace(
                 "TryDecodeFormComponent(matches[0].Groups[1].Value, out decodedValue)",
